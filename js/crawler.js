@@ -1,5 +1,5 @@
 /**
- * CROWLER TIN TỨC DÂN TRÍ - CHỈ BÓC TÁCH DỮ LIỆU VÀ ẢNH THẬT 100%
+ * CROWLER TIN TỨC DÂN TRÍ - TRÍCH XUẤT 100% NỘI DUNG VÀ ẢNH GỐC
  */
 
 const CATEGORY_MAP = {
@@ -20,7 +20,6 @@ const CATEGORY_MAP = {
     'xe': { title: 'Xe ++', id: 'xe' }
 };
 
-// Chuẩn hóa URL ảnh gốc từ Dân Trí
 function cleanDantriImageUrl(rawUrl) {
     if (!rawUrl) return '';
     let url = rawUrl.trim();
@@ -32,7 +31,6 @@ function cleanDantriImageUrl(rawUrl) {
     return url;
 }
 
-// 1. Fetch HTML thật qua Proxy
 async function fetchHtmlWithProxies(url) {
     const proxies = [
         `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -43,7 +41,7 @@ async function fetchHtmlWithProxies(url) {
     for (const proxyUrl of proxies) {
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 6000);
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
             const res = await fetch(proxyUrl, { signal: controller.signal });
             clearTimeout(timeoutId);
             if (res.ok) {
@@ -52,14 +50,11 @@ async function fetchHtmlWithProxies(url) {
                     return text;
                 }
             }
-        } catch (e) {
-            console.warn(`Proxy failed: ${proxyUrl}`);
-        }
+        } catch (e) {}
     }
     return null;
 }
 
-// 2. Bóc tách DOM HTML thật thành JSON bài viết
 function parseDantriDom(htmlText, url) {
     const doc = new DOMParser().parseFromString(htmlText, 'text/html');
 
@@ -78,13 +73,13 @@ function parseDantriDom(htmlText, url) {
     const id = `dtri-${articleNumId}`;
     const slug = fileName.replace(/\.htm$/, '').replace(/-\d+$/, '');
 
-    // A. Tiêu đề bài viết gốc
+    // Title
     const title = getText('#articleContent [data-slot="title"]') ||
                   getText('h1.title-page') ||
                   getText('h1.singular-title') ||
                   getText('h1') || '';
 
-    // B. Sa-pô / Tóm tắt gốc
+    // Sapo
     let excerpt = getText('#articleContent [data-slot="sapo"]') ||
                   getText('h2.singular-sapo') ||
                   getText('.sapo') || '';
@@ -93,7 +88,7 @@ function parseDantriDom(htmlText, url) {
         excerpt = `(Dân trí) - ${excerpt}`;
     }
 
-    // C. Toàn bộ nội dung văn bản gốc (Chia đoạn bằng \n\n)
+    // Content
     let contentEl = doc.querySelector('#articleContent [data-slot="content"]') ||
                     doc.querySelector('.singular-content') ||
                     doc.querySelector('.e-magazine__body') ||
@@ -116,7 +111,7 @@ function parseDantriDom(htmlText, url) {
         }
     }
 
-    // D. Tác giả & Chuyên mục gốc
+    // Author & Category
     const author = getText('#articleContent [rel="author"]') ||
                    getText('.author-name') ||
                    getText('.singular-author') || 'Dân trí';
@@ -124,7 +119,7 @@ function parseDantriDom(htmlText, url) {
     const catInfo = CATEGORY_MAP[rawCategorySlug] || { title: 'Thời sự', id: 'Thời sự' };
     const category = doc.querySelector('ul.breadcrumbs li:last-child a, .breadcrumbs a:last-child')?.textContent?.trim() || catInfo.title;
 
-    // E. Ngày giờ đăng gốc
+    // Published Time
     const rawTime = getText('.singular-time') || getText('time') || getText('.author-time');
     let publishedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
     const timeMatch = rawTime.match(/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}:\d{2})/);
@@ -133,7 +128,7 @@ function parseDantriDom(htmlText, url) {
         publishedAt = `${year}-${month}-${day} ${timeStr}`;
     }
 
-    // F. Trích xuất chính xác ĐƯỜNG DẪN ẢNH GỐC của Dân Trí
+    // Image URL
     let rawImageUrl = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
                       doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
                       doc.querySelector('#articleContent figure img')?.getAttribute('src') ||
@@ -158,7 +153,6 @@ function parseDantriDom(htmlText, url) {
     };
 }
 
-// 3. Thực thi cào bài viết gốc
 async function getArticle(url) {
     if (!url || !url.includes('dantri.com.vn')) {
         alert("Vui lòng nhập đường dẫn bài viết từ dantri.com.vn!");
@@ -174,7 +168,6 @@ async function getArticle(url) {
         }
     }
 
-    // NẾU PROXY BỊ DÂN TRÍ CHẶN -> KHÔNG TẠO BÀI GIẢ, THÔNG BÁO DÁN HTML
-    alert("Dân Trí chặn cào tự động từ máy chủ Proxy. Vui lòng mở bài báo trên Dân trí -> Nhấn Ctrl+U (Xem nguồn trang) -> Copy toàn bộ mã HTML và dán vào ô 'Cách dự phòng' bên dưới!");
+    alert("Proxy bị Dân Trí chặn tự động. Bạn hãy mở bài viết trên Dân trí -> Bấm Ctrl+U -> Copy toàn bộ mã nguồn HTML dán vào ô 'Cách dự phòng' bên dưới!");
     return null;
 }
