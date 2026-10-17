@@ -1,5 +1,5 @@
 /**
- * CROWLER TIN TỨC DÂN TRÍ - TRÍCH XUẤT CHUẨN 100% CẤU TRÚC 12 TRƯỜNG
+ * CROWLER TIN TỨC DÂN TRÍ - CHỈ BÓC TÁCH DỮ LIỆU VÀ ẢNH THẬT 100%
  */
 
 const CATEGORY_MAP = {
@@ -20,7 +20,19 @@ const CATEGORY_MAP = {
     'xe': { title: 'Xe ++', id: 'xe' }
 };
 
-// 1. Lấy mã nguồn HTML từ bài viết thông qua các Proxy
+// Chuẩn hóa URL ảnh gốc từ Dân Trí
+function cleanDantriImageUrl(rawUrl) {
+    if (!rawUrl) return '';
+    let url = rawUrl.trim();
+    if (url.startsWith('//')) {
+        url = 'https:' + url;
+    } else if (url.startsWith('/')) {
+        url = 'https://dantri.com.vn' + url;
+    }
+    return url;
+}
+
+// 1. Fetch HTML thật qua Proxy
 async function fetchHtmlWithProxies(url) {
     const proxies = [
         `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -31,7 +43,7 @@ async function fetchHtmlWithProxies(url) {
     for (const proxyUrl of proxies) {
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const timeoutId = setTimeout(() => controller.abort(), 6000);
             const res = await fetch(proxyUrl, { signal: controller.signal });
             clearTimeout(timeoutId);
             if (res.ok) {
@@ -40,12 +52,14 @@ async function fetchHtmlWithProxies(url) {
                     return text;
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn(`Proxy failed: ${proxyUrl}`);
+        }
     }
     return null;
 }
 
-// 2. Bóc tách DOM HTML bài báo thành 12 trường JSON
+// 2. Bóc tách DOM HTML thật thành JSON bài viết
 function parseDantriDom(htmlText, url) {
     const doc = new DOMParser().parseFromString(htmlText, 'text/html');
 
@@ -64,13 +78,13 @@ function parseDantriDom(htmlText, url) {
     const id = `dtri-${articleNumId}`;
     const slug = fileName.replace(/\.htm$/, '').replace(/-\d+$/, '');
 
-    // Title
+    // A. Tiêu đề bài viết gốc
     const title = getText('#articleContent [data-slot="title"]') ||
                   getText('h1.title-page') ||
                   getText('h1.singular-title') ||
                   getText('h1') || '';
 
-    // Excerpt / Sapo
+    // B. Sa-pô / Tóm tắt gốc
     let excerpt = getText('#articleContent [data-slot="sapo"]') ||
                   getText('h2.singular-sapo') ||
                   getText('.sapo') || '';
@@ -79,7 +93,7 @@ function parseDantriDom(htmlText, url) {
         excerpt = `(Dân trí) - ${excerpt}`;
     }
 
-    // Content
+    // C. Toàn bộ nội dung văn bản gốc (Chia đoạn bằng \n\n)
     let contentEl = doc.querySelector('#articleContent [data-slot="content"]') ||
                     doc.querySelector('.singular-content') ||
                     doc.querySelector('.e-magazine__body') ||
@@ -102,27 +116,30 @@ function parseDantriDom(htmlText, url) {
         }
     }
 
-    // Author & Category
+    // D. Tác giả & Chuyên mục gốc
     const author = getText('#articleContent [rel="author"]') ||
                    getText('.author-name') ||
-                   getText('.singular-author') || 'Văn Hưng';
+                   getText('.singular-author') || 'Dân trí';
 
     const catInfo = CATEGORY_MAP[rawCategorySlug] || { title: 'Thời sự', id: 'Thời sự' };
     const category = doc.querySelector('ul.breadcrumbs li:last-child a, .breadcrumbs a:last-child')?.textContent?.trim() || catInfo.title;
 
-    // PublishedAt
+    // E. Ngày giờ đăng gốc
     const rawTime = getText('.singular-time') || getText('time') || getText('.author-time');
-    let publishedAt = "2026-10-18 01:30";
+    let publishedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
     const timeMatch = rawTime.match(/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}:\d{2})/);
     if (timeMatch) {
         const [_, day, month, year, timeStr] = timeMatch;
         publishedAt = `${year}-${month}-${day} ${timeStr}`;
     }
 
-    // Image
-    let imageUrl = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
-                   doc.querySelector('#articleContent img, .singular-content img')?.getAttribute('src') ||
-                   'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&auto=format&fit=crop';
+    // F. Trích xuất chính xác ĐƯỜNG DẪN ẢNH GỐC của Dân Trí
+    let rawImageUrl = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
+                      doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
+                      doc.querySelector('#articleContent figure img')?.getAttribute('src') ||
+                      doc.querySelector('#articleContent img, .singular-content img')?.getAttribute('src') || '';
+
+    const imageUrl = cleanDantriImageUrl(rawImageUrl);
 
     return {
         "id": id,
@@ -141,58 +158,23 @@ function parseDantriDom(htmlText, url) {
     };
 }
 
-// 3. Hàm getArticle chính
+// 3. Thực thi cào bài viết gốc
 async function getArticle(url) {
-    try {
-        if (!url || !url.includes('dantri.com.vn')) {
-            alert("Vui lòng nhập đường dẫn bài viết từ dantri.com.vn!");
-            return null;
-        }
-
-        const htmlText = await fetchHtmlWithProxies(url);
-
-        if (htmlText) {
-            const result = parseDantriDom(htmlText, url);
-            if (result.title && result.title.length > 5 && result.content && result.content.length > 50) {
-                return result;
-            }
-        }
-
-        // TỰ ĐỘNG TẠO BÀI DỰ PHÒNG CHUẨN NẾU PROXY BỊ CHẶN
-        const parsedUrl = new URL(url);
-        const pathSegments = parsedUrl.pathname.split('/').filter(Boolean);
-        const rawCategorySlug = pathSegments[0] || 'the-thao';
-        const fileName = pathSegments[pathSegments.length - 1] || '';
-        const idMatch = fileName.match(/(\d+)\.htm/);
-        const id = idMatch ? `dtri-${idMatch[1]}` : `dtri-${Date.now()}`;
-        const slug = fileName.replace(/\.htm$/, '').replace(/-\d+$/, '');
-        const catInfo = CATEGORY_MAP[rawCategorySlug] || { title: 'Thể thao', id: 'Thể thao' };
-
-        let autoTitle = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-        if (slug.includes('haaland')) {
-            autoTitle = "Haaland lập cú đúp, Man City nối dài mạch thắng tại Ngoại hạng Anh";
-        }
-
-        const fallbackImg = "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&auto=format&fit=crop";
-
-        return {
-            "id": id,
-            "title": autoTitle,
-            "slug": slug,
-            "excerpt": `(Dân trí) - Trong trận đấu vừa qua, các cầu thủ đã thi đấu bùng nổ giúp đội nhà giành chiến thắng thuyết phục.`,
-            "content": `Thi đấu vô cùng thăng hoa trên sân nhà, đội bóng đã chủ động tràn lên tấn công ngay từ những phút đầu tiên.\n\nSự cơ động của hàng tiền vệ cùng phong độ săn bàn ấn tượng của các chân sút chủ lực đã giúp đội nhà tạo ra thế trận áp đảo.\n\nChung cuộc, chiến thắng này giúp đội bóng củng cố vị trí vững chắc trên bảng xếp hạng.`,
-            "author": "Văn Hưng",
-            "category": catInfo.title,
-            "publishedAt": "2026-10-18 01:30",
-            "source": "dantri.com.vn",
-            "url": url,
-            "image": fallbackImg,
-            "thumbnail": fallbackImg,
-            "categoryId": catInfo.id
-        };
-
-    } catch (error) {
-        console.error("Lỗi cào dữ liệu:", error);
+    if (!url || !url.includes('dantri.com.vn')) {
+        alert("Vui lòng nhập đường dẫn bài viết từ dantri.com.vn!");
         return null;
     }
+
+    const htmlText = await fetchHtmlWithProxies(url);
+
+    if (htmlText) {
+        const result = parseDantriDom(htmlText, url);
+        if (result.title && result.title.length > 5 && result.content && result.content.length > 50) {
+            return result;
+        }
+    }
+
+    // NẾU PROXY BỊ DÂN TRÍ CHẶN -> KHÔNG TẠO BÀI GIẢ, THÔNG BÁO DÁN HTML
+    alert("Dân Trí chặn cào tự động từ máy chủ Proxy. Vui lòng mở bài báo trên Dân trí -> Nhấn Ctrl+U (Xem nguồn trang) -> Copy toàn bộ mã HTML và dán vào ô 'Cách dự phòng' bên dưới!");
+    return null;
 }
