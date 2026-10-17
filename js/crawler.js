@@ -1,5 +1,5 @@
 /**
- * CROWLER TIN TỨC DÂN TRÍ - TỰ ĐỘNG VƯỢT ANTI-BOT 100% & BÓC TÁCH ẢNH GỐC CHUẨN
+ * CROWLER TIN TỨC DÂN TRÍ - CÀO SONG SONG MULTI-PROXY (CÀO SIÊU TỐC 1-2S)
  */
 
 const CATEGORY_MAP = {
@@ -38,94 +38,94 @@ function getImgSrcFromElement(imgEl) {
     return (src && !src.startsWith('data:')) ? src : '';
 }
 
-// Kiểm tra mã HTML hoặc Markdown có bị Cloudflare chặn hay không
+// Kiểm tra mã HTML hoặc Markdown có bị Cloudflare/Anti-bot chặn hay không
 function isCloudflareBlocked(text) {
     if (!text || text.length < 300) return true;
     const lower = text.toLowerCase();
     return lower.includes('just a moment...') || 
            lower.includes('attention required!') || 
            lower.includes('access denied') || 
-           lower.includes('cloudflare') && lower.includes('enable javascript');
+           (lower.includes('cloudflare') && lower.includes('enable javascript'));
 }
 
-// 1. Hệ thống proxy 5 tầng dự phòng chống nghẽn / chống chặn IP
+// 1. KÍCH HOẠT CÀO SONG SONG SONG MULTI-PROXY (Proxy nào nhanh nhất lấy ngay)
 async function fetchHtmlWithMultiProxy(url) {
     const encodedUrl = encodeURIComponent(url);
 
-    // Tầng 1: Jina AI Reader (Ưu tiên số 1 - Chuyên trị Cloudflare Anti-Bot)
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 7000);
-        const res = await fetch(`https://r.jina.ai/${url}`, { 
-            signal: controller.signal,
-            headers: { 'X-No-Cache': 'true' }
-        });
-        clearTimeout(timeoutId);
-        if (res.ok) {
-            const text = await res.text();
-            if (!isCloudflareBlocked(text)) {
-                return { type: 'markdown', content: text };
+    const proxyFetchers = [
+        // Proxy 1: Jina AI Reader (Vượt Cloudflare cực mạnh)
+        async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6000);
+            const res = await fetch(`https://r.jina.ai/${url}`, { 
+                signal: controller.signal,
+                headers: { 'X-No-Cache': 'true' }
+            });
+            clearTimeout(timeoutId);
+            if (res.ok) {
+                const text = await res.text();
+                if (!isCloudflareBlocked(text)) return { type: 'markdown', content: text };
             }
-        }
-    } catch (e) {}
-
-    // Tầng 2: AllOrigins Proxy (JSON)
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(`https://api.allorigins.win/get?url=${encodedUrl}`, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (res.ok) {
-            const data = await res.json();
-            if (data && data.contents && !isCloudflareBlocked(data.contents)) {
-                return { type: 'html', content: data.contents };
+            throw new Error('Jina failed');
+        },
+        // Proxy 2: AllOrigins JSON API
+        async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const res = await fetch(`https://api.allorigins.win/get?url=${encodedUrl}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.contents && !isCloudflareBlocked(data.contents)) {
+                    return { type: 'html', content: data.contents };
+                }
             }
-        }
-    } catch (e) {}
-
-    // Tầng 3: AllOrigins Raw
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(`https://api.allorigins.win/raw?url=${encodedUrl}`, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (res.ok) {
-            const text = await res.text();
-            if (!isCloudflareBlocked(text)) {
-                return { type: 'html', content: text };
+            throw new Error('AllOrigins JSON failed');
+        },
+        // Proxy 3: CodeTabs Proxy
+        async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (res.ok) {
+                const text = await res.text();
+                if (!isCloudflareBlocked(text)) return { type: 'html', content: text };
             }
-        }
-    } catch (e) {}
-
-    // Tầng 4: CodeTabs Proxy
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (res.ok) {
-            const text = await res.text();
-            if (!isCloudflareBlocked(text)) {
-                return { type: 'html', content: text };
+            throw new Error('CodeTabs failed');
+        },
+        // Proxy 4: AllOrigins Raw
+        async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const res = await fetch(`https://api.allorigins.win/raw?url=${encodedUrl}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (res.ok) {
+                const text = await res.text();
+                if (!isCloudflareBlocked(text)) return { type: 'html', content: text };
             }
-        }
-    } catch (e) {}
-
-    // Tầng 5: CorsProxy.io
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(`https://corsproxy.io/?${encodedUrl}`, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (res.ok) {
-            const text = await res.text();
-            if (!isCloudflareBlocked(text)) {
-                return { type: 'html', content: text };
+            throw new Error('AllOrigins Raw failed');
+        },
+        // Proxy 5: CorsProxy.io
+        async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const res = await fetch(`https://corsproxy.io/?${encodedUrl}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (res.ok) {
+                const text = await res.text();
+                if (!isCloudflareBlocked(text)) return { type: 'html', content: text };
             }
+            throw new Error('CorsProxy failed');
         }
-    } catch (e) {}
+    ];
 
-    return null;
+    try {
+        // Trả về ngay kết quả từ Proxy đầu tiên phản hồi thành công!
+        return await Promise.any(proxyFetchers.map(fn => fn()));
+    } catch (e) {
+        return null;
+    }
 }
 
 // 2. Phân tích DOM HTML Dân trí chuẩn
@@ -147,15 +147,17 @@ function parseDantriDom(htmlText, url) {
     const id = `dtri-${articleNumId}`;
     const slug = fileName.replace(/\.htm$/, '').replace(/-\d+$/, '');
 
-    // 1. Tiêu đề
+    // Tạo tiêu đề dự phòng từ đường dẫn URL nếu DOM bị thiếu
+    const slugFallbackTitle = slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
     const title = doc.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
                   getText('#articleContent [data-slot="title"]') ||
                   getText('h1.title-page') ||
                   getText('h1.singular-title') ||
                   getText('h1.e-magazine__title') ||
-                  getText('h1') || '';
+                  getText('h1') || 
+                  slugFallbackTitle;
 
-    // 2. Sapo
     let excerpt = doc.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
                   getText('#articleContent [data-slot="sapo"]') ||
                   getText('h2.singular-sapo') ||
@@ -166,7 +168,6 @@ function parseDantriDom(htmlText, url) {
         excerpt = `(Dân trí) - ${excerpt}`;
     }
 
-    // 3. Nội dung
     let contentEl = doc.querySelector('#articleContent [data-slot="content"]') ||
                     doc.querySelector('.singular-content') ||
                     doc.querySelector('.e-magazine__body') ||
@@ -190,7 +191,6 @@ function parseDantriDom(htmlText, url) {
         }
     }
 
-    // 4. Tác giả & Chuyên mục
     const author = getText('#articleContent [rel="author"]') ||
                    getText('.author-name') ||
                    getText('.singular-author') ||
@@ -199,7 +199,6 @@ function parseDantriDom(htmlText, url) {
     const catInfo = CATEGORY_MAP[rawCategorySlug] || { title: 'Thời sự', id: 'Thời sự' };
     const category = doc.querySelector('ul.breadcrumbs li:last-child a, .breadcrumbs a:last-child')?.textContent?.trim() || catInfo.title;
 
-    // 5. Thời gian đăng
     const rawTime = getText('.singular-time') || getText('time') || getText('.author-time');
     let publishedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
     const timeMatch = rawTime ? rawTime.match(/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}:\d{2})/) : null;
@@ -208,7 +207,6 @@ function parseDantriDom(htmlText, url) {
         publishedAt = `${year}-${month}-${day} ${timeStr}`;
     }
 
-    // 6. Xử lý lấy ảnh chuẩn gốc bài viết
     let rawImageUrl = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
                       doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
                       getImgSrcFromElement(doc.querySelector('#articleContent figure img')) ||
@@ -249,13 +247,10 @@ function parseJinaMarkdown(text, url) {
         } else if (line.startsWith('![')) {
             const match = line.match(/\!\[.*?\]\((.*?)\)/);
             if (match && !image && !match[1].startsWith('data:')) image = match[1];
-        } else if (!line.startsWith('http') && !line.startsWith('URL Source:') && !line.startsWith('Markdown Content:')) {
+        } else if (!line.startsWith('http') && !line.startsWith('URL Source:') && !line.startsWith('Markdown Content:') && !line.startsWith('Title:')) {
             contentLines.push(line);
         }
     }
-
-    const excerpt = contentLines.length > 0 ? `(Dân trí) - ${contentLines[0]}` : '(Dân trí) - Tin tức';
-    const content = contentLines.slice(1).join('\n\n');
 
     const parsedUrl = new URL(url);
     const pathSegments = parsedUrl.pathname.split('/').filter(Boolean);
@@ -265,10 +260,16 @@ function parseJinaMarkdown(text, url) {
     const id = idMatch ? `dtri-${idMatch[1]}` : `dtri-${Date.now()}`;
     const catInfo = CATEGORY_MAP[rawCategorySlug] || { title: 'Thời sự', id: 'Thời sự' };
 
+    const slug = fileName.replace(/\.htm$/, '').replace(/-\d+$/, '');
+    const slugFallbackTitle = slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+    const excerpt = contentLines.length > 0 ? `(Dân trí) - ${contentLines[0]}` : '(Dân trí) - Tin tức';
+    const content = contentLines.slice(1).join('\n\n');
+
     return {
         "id": id,
-        "title": title || "Tin tức Dân trí",
-        "slug": fileName.replace(/\.htm$/, ''),
+        "title": title || slugFallbackTitle || "Tin tức Dân trí",
+        "slug": slug,
         "excerpt": excerpt,
         "content": content || "Nội dung bài viết...",
         "author": "Dân trí",
