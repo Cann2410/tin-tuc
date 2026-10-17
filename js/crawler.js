@@ -1,6 +1,5 @@
 /**
- * CROWLER TIN TỨC DÂN TRÍ - CÔNG NGHỆ PROXY 4 TẦNG THÔNG MINH
- * TỰ ĐỘNG VƯỢT TẤT CẢ RÀO CẢN ANTI-BOT / CLOUDFLARE 100% SUCCESS
+ * CROWLER TIN TỨC DÂN TRÍ - CÀO SIÊU TỐC & LẤY 100% ẢNH GỐC DÂN TRÍ
  */
 
 const CATEGORY_MAP = {
@@ -21,66 +20,71 @@ const CATEGORY_MAP = {
     'xe': { title: 'Xe ++', id: 'xe' }
 };
 
+// Chuẩn hóa link ảnh thật từ CDN Dân Trí (Không dùng ảnh thay thế khác)
 function cleanDantriImageUrl(rawUrl) {
     if (!rawUrl) return '';
     let url = rawUrl.trim();
-    if (url.startsWith('//')) return 'https:' + url;
-    if (url.startsWith('/')) return 'https://dantri.com.vn' + url;
+    if (url.startsWith('//')) {
+        url = 'https:' + url;
+    } else if (url.startsWith('/')) {
+        url = 'https://dantri.com.vn' + url;
+    }
     return url;
 }
 
-// 1. Hệ thống Proxy 4 tầng linh hoạt (Bọc JSON + Jina Reader API)
-async function fetchHtmlWithProxies(url) {
-    const proxyConfigs = [
-        {
-            type: 'json_allorigins',
-            url: `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
-        },
-        {
-            type: 'raw',
-            url: `https://corsproxy.io/?${encodeURIComponent(url)}`
-        },
-        {
-            type: 'raw',
-            url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-        },
-        {
-            type: 'jina',
-            url: `https://r.jina.ai/${url}`
+// Hàm fetch từ 1 proxy với giới hạn timeout cực ngắn (3.5 giây)
+async function fetchFromProxy(proxyUrl, isJson = false) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    
+    try {
+        const res = await fetch(proxyUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!res.ok) throw new Error('HTTP Error');
+        
+        if (isJson) {
+            const data = await res.json();
+            if (data && data.contents && data.contents.length > 1500) {
+                return data.contents;
+            }
+        } else {
+            const text = await res.text();
+            if (text && text.length > 1500 && !text.includes('Access Denied') && !text.includes('Challenge Required')) {
+                return text;
+            }
         }
+    } catch (e) {
+        clearTimeout(timeoutId);
+    }
+    throw new Error('Proxy failed');
+}
+
+// Kích hoạt cào song song (Song song rượt đuổi) - Proxy nào nhanh hơn sẽ lấy luôn
+async function fetchHtmlFast(url) {
+    const encodedUrl = encodeURIComponent(url);
+    
+    const proxyPromises = [
+        fetchFromProxy(`https://api.allorigins.win/get?url=${encodedUrl}`, true),
+        fetchFromProxy(`https://corsproxy.io/?${encodedUrl}`, false),
+        fetchFromProxy(`https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`, false)
     ];
 
-    for (const config of proxyConfigs) {
+    try {
+        return await Promise.any(proxyPromises);
+    } catch (e) {
+        // Nếu các CORS Proxy bị chặn, chuyển sang Jina AI làm phương án dự phòng cuối
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 6000);
-            const res = await fetch(config.url, { signal: controller.signal });
-            clearTimeout(timeoutId);
-
+            const res = await fetch(`https://r.jina.ai/${url}`);
             if (res.ok) {
-                if (config.type === 'json_allorigins') {
-                    const data = await res.json();
-                    if (data && data.contents && data.contents.length > 2000) {
-                        return { type: 'html', text: data.contents };
-                    }
-                } else if (config.type === 'raw') {
-                    const text = await res.text();
-                    if (text && text.length > 2000 && !text.includes('Challenge Required') && !text.includes('Access Denied')) {
-                        return { type: 'html', text: text };
-                    }
-                } else if (config.type === 'jina') {
-                    const text = await res.text();
-                    if (text && text.length > 200) {
-                        return { type: 'markdown', text: text };
-                    }
-                }
+                const text = await res.text();
+                return { isJina: true, text: text };
             }
-        } catch (e) {}
+        } catch (err) {}
     }
     return null;
 }
 
-// 2. Bóc tách DOM HTML Dân trí chuẩn
+// Bóc tách DOM chính xác bài viết Dân trí
 function parseDantriDom(htmlText, url) {
     const doc = new DOMParser().parseFromString(htmlText, 'text/html');
 
@@ -99,21 +103,24 @@ function parseDantriDom(htmlText, url) {
     const id = `dtri-${articleNumId}`;
     const slug = fileName.replace(/\.htm$/, '').replace(/-\d+$/, '');
 
-    const title = getText('#articleContent [data-slot="title"]') ||
+    // 1. Tiêu đề
+    const title = doc.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
+                  getText('#articleContent [data-slot="title"]') ||
                   getText('h1.title-page') ||
                   getText('h1.singular-title') ||
-                  getText('h1') ||
-                  doc.querySelector('meta[property="og:title"]')?.getAttribute('content') || '';
+                  getText('h1') || '';
 
-    let excerpt = getText('#articleContent [data-slot="sapo"]') ||
+    // 2. Sapo
+    let excerpt = doc.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
+                  getText('#articleContent [data-slot="sapo"]') ||
                   getText('h2.singular-sapo') ||
-                  getText('.sapo') ||
-                  doc.querySelector('meta[property="og:description"]')?.getAttribute('content') || '';
+                  getText('.sapo') || '';
 
     if (excerpt && !excerpt.startsWith('(Dân trí)')) {
         excerpt = `(Dân trí) - ${excerpt}`;
     }
 
+    // 3. Nội dung bài viết
     let contentEl = doc.querySelector('#articleContent [data-slot="content"]') ||
                     doc.querySelector('.singular-content') ||
                     doc.querySelector('.e-magazine__body') ||
@@ -136,6 +143,7 @@ function parseDantriDom(htmlText, url) {
         }
     }
 
+    // 4. Tác giả & Chuyên mục
     const author = getText('#articleContent [rel="author"]') ||
                    getText('.author-name') ||
                    getText('.singular-author') || 'Dân trí';
@@ -143,18 +151,21 @@ function parseDantriDom(htmlText, url) {
     const catInfo = CATEGORY_MAP[rawCategorySlug] || { title: 'Thời sự', id: 'Thời sự' };
     const category = doc.querySelector('ul.breadcrumbs li:last-child a, .breadcrumbs a:last-child')?.textContent?.trim() || catInfo.title;
 
+    // 5. Ngày đăng
     const rawTime = getText('.singular-time') || getText('time') || getText('.author-time');
     let publishedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
-    const timeMatch = rawTime.match(/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}:\d{2})/);
+    const timeMatch = rawTime ? rawTime.match(/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}:\d{2})/) : null;
     if (timeMatch) {
         const [_, day, month, year, timeStr] = timeMatch;
         publishedAt = `${year}-${month}-${day} ${timeStr}`;
     }
 
+    // 6. TRÍCH XUẤT 100% ẢNH GỐC BÀI VIẾT TỪ DÂN TRÍ (Chỉ lấy ảnh thật từ trang Dân Trí)
     let rawImageUrl = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
                       doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
                       doc.querySelector('#articleContent figure img')?.getAttribute('src') ||
-                      doc.querySelector('#articleContent img, .singular-content img')?.getAttribute('src') || '';
+                      doc.querySelector('#articleContent figure img')?.getAttribute('data-src') ||
+                      doc.querySelector('.singular-content img')?.getAttribute('src') || '';
 
     const imageUrl = cleanDantriImageUrl(rawImageUrl);
 
@@ -175,9 +186,9 @@ function parseDantriDom(htmlText, url) {
     };
 }
 
-// 3. Xử lý dự phòng bằng Jina AI Reader
-function parseJinaMarkdown(mdText, url) {
-    const lines = mdText.split('\n').map(l => l.trim()).filter(Boolean);
+// Bóc tách text nếu rơi vào chế độ Jina AI
+function parseJinaText(text, url) {
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
     let title = '';
     let image = '';
     let contentLines = [];
@@ -195,7 +206,7 @@ function parseJinaMarkdown(mdText, url) {
         }
     }
 
-    const excerpt = contentLines.length > 0 ? `(Dân trí) - ${contentLines[0]}` : '(Dân trí) - Tin tức mới nhất';
+    const excerpt = contentLines.length > 0 ? `(Dân trí) - ${contentLines[0]}` : '(Dân trí) - Tin tức';
     const content = contentLines.slice(1).join('\n\n');
 
     const parsedUrl = new URL(url);
@@ -211,7 +222,7 @@ function parseJinaMarkdown(mdText, url) {
         "title": title || "Tin tức Dân trí",
         "slug": fileName.replace(/\.htm$/, ''),
         "excerpt": excerpt,
-        "content": content || "Nội dung đang cập nhật...",
+        "content": content || "Nội dung bài viết...",
         "author": "Dân trí",
         "category": catInfo.title,
         "publishedAt": new Date().toISOString().replace('T', ' ').substring(0, 16),
@@ -223,29 +234,29 @@ function parseJinaMarkdown(mdText, url) {
     };
 }
 
-// 4. Hàm cào tin chính
+// Hàm gọi cào khi bấm nút Crawl
 async function getArticle(url) {
     if (!url || !url.includes('dantri.com.vn')) {
-        alert("Vui lòng nhập đường dẫn bài viết từ dantri.com.vn!");
+        alert("Vui lòng nhập đúng đường dẫn bài viết từ dantri.com.vn!");
         return null;
     }
 
-    const data = await fetchHtmlWithProxies(url);
+    const data = await fetchHtmlFast(url);
 
     if (data) {
-        if (data.type === 'html') {
-            const result = parseDantriDom(data.text, url);
-            if (result.title && result.title.length > 5) {
+        if (typeof data === 'string') {
+            const result = parseDantriDom(data, url);
+            if (result.title && result.title.length > 3) {
                 return result;
             }
-        } else if (data.type === 'markdown') {
-            const result = parseJinaMarkdown(data.text, url);
-            if (result.title && result.title.length > 5) {
+        } else if (data.isJina && data.text) {
+            const result = parseJinaText(data.text, url);
+            if (result.title && result.title.length > 3) {
                 return result;
             }
         }
     }
 
-    alert("Mạng quá chậm hoặc URL không đúng dạng bài viết Dân trí. Hãy dán mã nguồn HTML (Ctrl+U) vào ô dự phòng bên dưới!");
+    alert("Proxy bị Dân Trí chặn IP tự động. Bạn hãy mở bài viết trên Dân Trí -> Bấm Ctrl+U -> Copy toàn bộ mã HTML dán vào 'Cách dự phòng' bên dưới!");
     return null;
 }
