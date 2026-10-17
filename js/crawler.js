@@ -1,5 +1,5 @@
 /**
- * CROWLER TIN TỨC DÂN TRÍ - TỰ ĐỘNG VƯỢT ANTI-BOT 100%
+ * CROWLER TIN TỨC DÂN TRÍ - TỰ ĐỘNG VƯỢT ANTI-BOT 100% & BÓC TÁCH ẢNH GỐC CHUẨN
  */
 
 const CATEGORY_MAP = {
@@ -20,12 +20,22 @@ const CATEGORY_MAP = {
     'xe': { title: 'Xe ++', id: 'xe' }
 };
 
+// Chuẩn hóa link ảnh thật từ Dân Trí (Bỏ qua ảnh rỗng data:image)
 function cleanDantriImageUrl(rawUrl) {
-    if (!rawUrl) return '';
+    if (!rawUrl || rawUrl.startsWith('data:')) return '';
     let url = rawUrl.trim();
     if (url.startsWith('//')) return 'https:' + url;
     if (url.startsWith('/')) return 'https://dantri.com.vn' + url;
     return url;
+}
+
+// Trích xuất link ảnh thực tế từ thẻ img (Uu tiên data-original, data-src trước src)
+function getImgSrcFromElement(imgEl) {
+    if (!imgEl) return '';
+    const src = imgEl.getAttribute('data-original') ||
+                imgEl.getAttribute('data-src') ||
+                imgEl.getAttribute('src') || '';
+    return (src && !src.startsWith('data:')) ? src : '';
 }
 
 // 1. Tầng 1: Lấy HTML thông qua AllOrigins Proxy
@@ -133,11 +143,12 @@ function parseDantriDom(htmlText, url) {
         publishedAt = `${year}-${month}-${day} ${timeStr}`;
     }
 
+    // XỬ LÝ LẤY ẢNH CHUẨN XÁC CHỐNG LẤY ẢNH GIẢ LAZY LOAD
     let rawImageUrl = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
                       doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
-                      doc.querySelector('#articleContent figure img')?.getAttribute('src') ||
-                      doc.querySelector('#articleContent figure img')?.getAttribute('data-src') ||
-                      doc.querySelector('.singular-content img')?.getAttribute('src') || '';
+                      getImgSrcFromElement(doc.querySelector('#articleContent figure img')) ||
+                      getImgSrcFromElement(doc.querySelector('.singular-content img')) ||
+                      getImgSrcFromElement(doc.querySelector('#articleContent img')) || '';
 
     const imageUrl = cleanDantriImageUrl(rawImageUrl);
 
@@ -172,7 +183,7 @@ function parseJinaMarkdown(text, url) {
             title = line.replace(/^#\s*/, '').trim();
         } else if (line.startsWith('![')) {
             const match = line.match(/\!\[.*?\]\((.*?)\)/);
-            if (match && !image) image = match[1];
+            if (match && !image && !match[1].startsWith('data:')) image = match[1];
         } else if (!line.startsWith('http') && !line.startsWith('URL Source:') && !line.startsWith('Markdown Content:')) {
             contentLines.push(line);
         }
