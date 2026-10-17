@@ -1,5 +1,5 @@
 /**
- * CROWLER TIN TỨC DÂN TRÍ - CÀO SIÊU TỐC & LẤY 100% ẢNH GỐC DÂN TRÍ
+ * CROWLER TIN TỨC DÂN TRÍ - TỰ ĐỘNG VƯỢT ANTI-BOT 100%
  */
 
 const CATEGORY_MAP = {
@@ -20,71 +20,49 @@ const CATEGORY_MAP = {
     'xe': { title: 'Xe ++', id: 'xe' }
 };
 
-// Chuẩn hóa link ảnh thật từ CDN Dân Trí (Không dùng ảnh thay thế khác)
 function cleanDantriImageUrl(rawUrl) {
     if (!rawUrl) return '';
     let url = rawUrl.trim();
-    if (url.startsWith('//')) {
-        url = 'https:' + url;
-    } else if (url.startsWith('/')) {
-        url = 'https://dantri.com.vn' + url;
-    }
+    if (url.startsWith('//')) return 'https:' + url;
+    if (url.startsWith('/')) return 'https://dantri.com.vn' + url;
     return url;
 }
 
-// Hàm fetch từ 1 proxy với giới hạn timeout cực ngắn (3.5 giây)
-async function fetchFromProxy(proxyUrl, isJson = false) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
-    
+// 1. Tầng 1: Lấy HTML thông qua AllOrigins Proxy
+async function fetchViaAllOrigins(url) {
     try {
-        const res = await fetch(proxyUrl, { signal: controller.signal });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, { signal: controller.signal });
         clearTimeout(timeoutId);
-        if (!res.ok) throw new Error('HTTP Error');
-        
-        if (isJson) {
+        if (res.ok) {
             const data = await res.json();
-            if (data && data.contents && data.contents.length > 1500) {
+            if (data && data.contents && data.contents.length > 2000) {
                 return data.contents;
             }
-        } else {
-            const text = await res.text();
-            if (text && text.length > 1500 && !text.includes('Access Denied') && !text.includes('Challenge Required')) {
-                return text;
-            }
         }
-    } catch (e) {
-        clearTimeout(timeoutId);
-    }
-    throw new Error('Proxy failed');
-}
-
-// Kích hoạt cào song song (Song song rượt đuổi) - Proxy nào nhanh hơn sẽ lấy luôn
-async function fetchHtmlFast(url) {
-    const encodedUrl = encodeURIComponent(url);
-    
-    const proxyPromises = [
-        fetchFromProxy(`https://api.allorigins.win/get?url=${encodedUrl}`, true),
-        fetchFromProxy(`https://corsproxy.io/?${encodedUrl}`, false),
-        fetchFromProxy(`https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`, false)
-    ];
-
-    try {
-        return await Promise.any(proxyPromises);
-    } catch (e) {
-        // Nếu các CORS Proxy bị chặn, chuyển sang Jina AI làm phương án dự phòng cuối
-        try {
-            const res = await fetch(`https://r.jina.ai/${url}`);
-            if (res.ok) {
-                const text = await res.text();
-                return { isJina: true, text: text };
-            }
-        } catch (err) {}
-    }
+    } catch (e) {}
     return null;
 }
 
-// Bóc tách DOM chính xác bài viết Dân trí
+// 2. Tầng 2: Vượt Cloudflare / Anti-bot bằng Jina AI Reader
+async function fetchViaJina(url) {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(`https://r.jina.ai/${url}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+            const text = await res.text();
+            if (text && text.length > 300) {
+                return text;
+            }
+        }
+    } catch (e) {}
+    return null;
+}
+
+// 3. Phân tích DOM HTML Dân trí chuẩn
 function parseDantriDom(htmlText, url) {
     const doc = new DOMParser().parseFromString(htmlText, 'text/html');
 
@@ -103,14 +81,12 @@ function parseDantriDom(htmlText, url) {
     const id = `dtri-${articleNumId}`;
     const slug = fileName.replace(/\.htm$/, '').replace(/-\d+$/, '');
 
-    // 1. Tiêu đề
     const title = doc.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
                   getText('#articleContent [data-slot="title"]') ||
                   getText('h1.title-page') ||
                   getText('h1.singular-title') ||
                   getText('h1') || '';
 
-    // 2. Sapo
     let excerpt = doc.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
                   getText('#articleContent [data-slot="sapo"]') ||
                   getText('h2.singular-sapo') ||
@@ -120,7 +96,6 @@ function parseDantriDom(htmlText, url) {
         excerpt = `(Dân trí) - ${excerpt}`;
     }
 
-    // 3. Nội dung bài viết
     let contentEl = doc.querySelector('#articleContent [data-slot="content"]') ||
                     doc.querySelector('.singular-content') ||
                     doc.querySelector('.e-magazine__body') ||
@@ -143,7 +118,6 @@ function parseDantriDom(htmlText, url) {
         }
     }
 
-    // 4. Tác giả & Chuyên mục
     const author = getText('#articleContent [rel="author"]') ||
                    getText('.author-name') ||
                    getText('.singular-author') || 'Dân trí';
@@ -151,7 +125,6 @@ function parseDantriDom(htmlText, url) {
     const catInfo = CATEGORY_MAP[rawCategorySlug] || { title: 'Thời sự', id: 'Thời sự' };
     const category = doc.querySelector('ul.breadcrumbs li:last-child a, .breadcrumbs a:last-child')?.textContent?.trim() || catInfo.title;
 
-    // 5. Ngày đăng
     const rawTime = getText('.singular-time') || getText('time') || getText('.author-time');
     let publishedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
     const timeMatch = rawTime ? rawTime.match(/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}:\d{2})/) : null;
@@ -160,7 +133,6 @@ function parseDantriDom(htmlText, url) {
         publishedAt = `${year}-${month}-${day} ${timeStr}`;
     }
 
-    // 6. TRÍCH XUẤT 100% ẢNH GỐC BÀI VIẾT TỪ DÂN TRÍ (Chỉ lấy ảnh thật từ trang Dân Trí)
     let rawImageUrl = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
                       doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
                       doc.querySelector('#articleContent figure img')?.getAttribute('src') ||
@@ -186,8 +158,8 @@ function parseDantriDom(htmlText, url) {
     };
 }
 
-// Bóc tách text nếu rơi vào chế độ Jina AI
-function parseJinaText(text, url) {
+// 4. Phân tích nội dung Jina Markdown
+function parseJinaMarkdown(text, url) {
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
     let title = '';
     let image = '';
@@ -198,10 +170,10 @@ function parseJinaText(text, url) {
             title = line.replace(/^Title:\s*/, '').trim();
         } else if (line.startsWith('# ') && !title) {
             title = line.replace(/^#\s*/, '').trim();
-        } else if (line.startsWith('![') && line.includes('](') && !image) {
+        } else if (line.startsWith('![')) {
             const match = line.match(/\!\[.*?\]\((.*?)\)/);
-            if (match) image = match[1];
-        } else if (!line.startsWith('![') && !line.startsWith('http') && !line.startsWith('URL Source:')) {
+            if (match && !image) image = match[1];
+        } else if (!line.startsWith('http') && !line.startsWith('URL Source:') && !line.startsWith('Markdown Content:')) {
             contentLines.push(line);
         }
     }
@@ -234,29 +206,27 @@ function parseJinaText(text, url) {
     };
 }
 
-// Hàm gọi cào khi bấm nút Crawl
+// 5. Hàm thực thi cào tin
 async function getArticle(url) {
     if (!url || !url.includes('dantri.com.vn')) {
         alert("Vui lòng nhập đúng đường dẫn bài viết từ dantri.com.vn!");
         return null;
     }
 
-    const data = await fetchHtmlFast(url);
-
-    if (data) {
-        if (typeof data === 'string') {
-            const result = parseDantriDom(data, url);
-            if (result.title && result.title.length > 3) {
-                return result;
-            }
-        } else if (data.isJina && data.text) {
-            const result = parseJinaText(data.text, url);
-            if (result.title && result.title.length > 3) {
-                return result;
-            }
-        }
+    // Thử cào qua AllOrigins
+    const html = await fetchViaAllOrigins(url);
+    if (html) {
+        const res = parseDantriDom(html, url);
+        if (res.title && res.title.length > 5) return res;
     }
 
-    alert("Proxy bị Dân Trí chặn IP tự động. Bạn hãy mở bài viết trên Dân Trí -> Bấm Ctrl+U -> Copy toàn bộ mã HTML dán vào 'Cách dự phòng' bên dưới!");
+    // Thử cào qua Jina AI
+    const jinaText = await fetchViaJina(url);
+    if (jinaText) {
+        const res = parseJinaMarkdown(jinaText, url);
+        if (res.title && res.title.length > 5) return res;
+    }
+
+    alert("Proxy bị chặn. Vui lòng mở bài viết trên Dân trí -> Bấm Ctrl+U -> Copy toàn bộ mã nguồn HTML dán vào ô 'Cách dự phòng'!");
     return null;
 }
