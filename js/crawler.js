@@ -38,11 +38,38 @@ function getImgSrcFromElement(imgEl) {
     return (src && !src.startsWith('data:')) ? src : '';
 }
 
-// 1. Hệ thống proxy 4 tầng dự phòng chống nghẽn / chống chặn IP
+// Kiểm tra mã HTML hoặc Markdown có bị Cloudflare chặn hay không
+function isCloudflareBlocked(text) {
+    if (!text || text.length < 300) return true;
+    const lower = text.toLowerCase();
+    return lower.includes('just a moment...') || 
+           lower.includes('attention required!') || 
+           lower.includes('access denied') || 
+           lower.includes('cloudflare') && lower.includes('enable javascript');
+}
+
+// 1. Hệ thống proxy 5 tầng dự phòng chống nghẽn / chống chặn IP
 async function fetchHtmlWithMultiProxy(url) {
     const encodedUrl = encodeURIComponent(url);
 
-    // Tầng 1: AllOrigins Proxy
+    // Tầng 1: Jina AI Reader (Ưu tiên số 1 - Chuyên trị Cloudflare Anti-Bot)
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 7000);
+        const res = await fetch(`https://r.jina.ai/${url}`, { 
+            signal: controller.signal,
+            headers: { 'X-No-Cache': 'true' }
+        });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+            const text = await res.text();
+            if (!isCloudflareBlocked(text)) {
+                return { type: 'markdown', content: text };
+            }
+        }
+    } catch (e) {}
+
+    // Tầng 2: AllOrigins Proxy (JSON)
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -50,27 +77,27 @@ async function fetchHtmlWithMultiProxy(url) {
         clearTimeout(timeoutId);
         if (res.ok) {
             const data = await res.json();
-            if (data && data.contents && data.contents.length > 2000) {
+            if (data && data.contents && !isCloudflareBlocked(data.contents)) {
                 return { type: 'html', content: data.contents };
             }
         }
     } catch (e) {}
 
-    // Tầng 2: CorsProxy.io
+    // Tầng 3: AllOrigins Raw
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(`https://corsproxy.io/?${encodedUrl}`, { signal: controller.signal });
+        const res = await fetch(`https://api.allorigins.win/raw?url=${encodedUrl}`, { signal: controller.signal });
         clearTimeout(timeoutId);
         if (res.ok) {
             const text = await res.text();
-            if (text && text.length > 2000 && !text.includes('Challenge Required') && !text.includes('Access Denied')) {
+            if (!isCloudflareBlocked(text)) {
                 return { type: 'html', content: text };
             }
         }
     } catch (e) {}
 
-    // Tầng 3: CodeTabs Proxy
+    // Tầng 4: CodeTabs Proxy
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -78,22 +105,22 @@ async function fetchHtmlWithMultiProxy(url) {
         clearTimeout(timeoutId);
         if (res.ok) {
             const text = await res.text();
-            if (text && text.length > 2000) {
+            if (!isCloudflareBlocked(text)) {
                 return { type: 'html', content: text };
             }
         }
     } catch (e) {}
 
-    // Tầng 4: Jina AI Reader (Chuyên trị Cloudflare Anti-Bot)
+    // Tầng 5: CorsProxy.io
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 7000);
-        const res = await fetch(`https://r.jina.ai/${url}`, { signal: controller.signal });
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(`https://corsproxy.io/?${encodedUrl}`, { signal: controller.signal });
         clearTimeout(timeoutId);
         if (res.ok) {
             const text = await res.text();
-            if (text && text.length > 300) {
-                return { type: 'markdown', content: text };
+            if (!isCloudflareBlocked(text)) {
+                return { type: 'html', content: text };
             }
         }
     } catch (e) {}
@@ -101,7 +128,7 @@ async function fetchHtmlWithMultiProxy(url) {
     return null;
 }
 
-// 2. Phân tích DOM HTML Dân trí chuẩn (Hỗ trợ eMagazine, bài chuẩn, photo, video)
+// 2. Phân tích DOM HTML Dân trí chuẩn
 function parseDantriDom(htmlText, url) {
     const doc = new DOMParser().parseFromString(htmlText, 'text/html');
 
@@ -265,11 +292,11 @@ async function getArticle(url) {
     const resData = await fetchHtmlWithMultiProxy(url);
 
     if (resData) {
-        if (resData.type === 'html') {
-            const res = parseDantriDom(resData.content, url);
-            if (res.title && res.title.length > 3) return res;
-        } else if (resData.type === 'markdown') {
+        if (resData.type === 'markdown') {
             const res = parseJinaMarkdown(resData.content, url);
+            if (res.title && res.title.length > 3) return res;
+        } else if (resData.type === 'html') {
+            const res = parseDantriDom(resData.content, url);
             if (res.title && res.title.length > 3) return res;
         }
     }
