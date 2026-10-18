@@ -22,8 +22,8 @@ body {
 }
 
 a {
-    text-decoration: none;
     color: inherit;
+    text-decoration: none;
 }
 
 img {
@@ -32,9 +32,9 @@ img {
 
 .container {
     width: 100%;
-    max-width: 1480px;
+    max-width: 1320px;
     margin: 0 auto;
-    padding: 0 18px;
+    padding: 0 20px;
 }
 
 /* =========================================
@@ -144,18 +144,8 @@ header {
 main {
     width: 100%;
     min-height: 75vh;
-    padding-top: 20px;
+    padding-top: 16px;
     padding-bottom: 35px;
-}
-
-/* Khung bao nội dung căn giữa */
-main > .container {
-    width: 100%;
-    max-width: 1480px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 18px;
-    padding-right: 18px;
 }
 
 #appView {
@@ -165,7 +155,7 @@ main > .container {
 }
 
 .section-title {
-    margin-bottom: 18px;
+    margin-bottom: 20px;
     padding-left: 13px;
     border-left: 5px solid #008837;
     color: #111;
@@ -201,15 +191,15 @@ main > .container {
 
 /* =========================================
    4. KHUNG TIN NỔI BẬT
-   Hai cột theo tỷ lệ 2:1
+   Tin lớn bên trái, tin nhỏ bên phải
 ========================================= */
 #appView .featured-grid {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
     align-items: start;
-    gap: 25px;
+    gap: 24px;
     width: 100%;
-    max-width: none;
+    max-width: 100%;
     margin: 0 auto 30px;
 }
 
@@ -217,7 +207,6 @@ main > .container {
 #appView .featured-grid > .featured-small-group {
     width: 100%;
     min-width: 0;
-    max-width: 100%;
 }
 
 .card-clean {
@@ -230,10 +219,9 @@ main > .container {
 #appView .featured-grid .card-img-large {
     display: block;
     width: 100%;
-    height: auto;
-    aspect-ratio: 1.6 / 1;
+    height: 330px;
     margin-bottom: 9px;
-    border-radius: 5px;
+    border-radius: 6px;
     object-fit: cover;
     object-position: center;
     background: #f0f0f0;
@@ -253,10 +241,10 @@ main > .container {
 #appView .featured-grid .card-title-large-green {
     margin: 0 0 10px;
     color: #008837;
-    font-size: 26px;
+    font-size: 25px;
     font-weight: 800;
     line-height: 1.35;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
 }
 
 /* Mô tả tin lớn */
@@ -267,7 +255,7 @@ main > .container {
     line-height: 1.6;
 }
 
-/* Thời gian */
+/* Thời gian tin lớn */
 #appView .featured-grid .card-time-clean {
     color: #888;
     font-size: 13px;
@@ -278,19 +266,18 @@ main > .container {
 #appView .featured-grid .featured-small-group {
     display: flex;
     flex-direction: column;
-    gap: 25px;
-    min-width: 0;
+    gap: 22px;
     width: 100%;
+    min-width: 0;
 }
 
 /* Ảnh tin nhỏ */
 #appView .featured-grid .card-img-small {
     display: block;
     width: 100%;
-    height: auto;
-    aspect-ratio: 1.6 / 1;
+    height: 190px;
     margin-bottom: 7px;
-    border-radius: 5px;
+    border-radius: 6px;
     object-fit: cover;
     object-position: center;
     background: #f0f0f0;
@@ -299,13 +286,14 @@ main > .container {
 /* Tiêu đề tin nhỏ */
 #appView .featured-grid .card-title-small-clean {
     margin: 0 0 5px;
-    color: #111;
+    color: #008837;
     font-size: 18px;
     font-weight: 750;
     line-height: 1.4;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
 }
 
+/* Hiệu ứng di chuột */
 #appView .featured-grid .card-clean:hover .card-title-large-green,
 #appView .featured-grid .card-clean:hover .card-title-small-clean {
     color: #006b2b;
@@ -698,8 +686,7 @@ footer {
    10. RESPONSIVE - TABLET
 ========================================= */
 @media (max-width: 1100px) {
-    .container,
-    main > .container {
+    .container {
         padding-left: 22px;
         padding-right: 22px;
     }
@@ -718,12 +705,20 @@ footer {
     }
 
     #appView .featured-grid {
-        grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
         gap: 18px;
     }
 
+    #appView .featured-grid .card-img-large {
+        height: 300px;
+    }
+
+    #appView .featured-grid .card-img-small {
+        height: 160px;
+    }
+
     #appView .featured-grid .card-title-large-green {
-        font-size: 24px;
+        font-size: 23px;
     }
 
     #appView .featured-grid .card-title-small-clean {
@@ -739,8 +734,7 @@ footer {
    11. RESPONSIVE - ĐIỆN THOẠI
 ========================================= */
 @media (max-width: 700px) {
-    .container,
-    main > .container {
+    .container {
         padding-left: 16px;
         padding-right: 16px;
     }
@@ -779,10 +773,12 @@ footer {
         gap: 25px;
     }
 
-    #appView .featured-grid .card-img-large,
+    #appView .featured-grid .card-img-large {
+        height: 250px;
+    }
+
     #appView .featured-grid .card-img-small {
-        aspect-ratio: 1.6 / 1;
-        height: auto;
+        height: 200px;
     }
 
     #appView .featured-grid .featured-small-group {
@@ -790,7 +786,7 @@ footer {
     }
 
     #appView .featured-grid .card-title-large-green {
-        font-size: 24px;
+        font-size: 23px;
         line-height: 1.35;
     }
 
@@ -864,8 +860,7 @@ footer {
    12. ĐIỆN THOẠI NHỎ
 ========================================= */
 @media (max-width: 380px) {
-    .container,
-    main > .container {
+    .container {
         padding-left: 12px;
         padding-right: 12px;
     }
@@ -877,6 +872,14 @@ footer {
     .nav-menu li a {
         padding: 6px;
         font-size: 11px;
+    }
+
+    #appView .featured-grid .card-img-large {
+        height: 210px;
+    }
+
+    #appView .featured-grid .card-img-small {
+        height: 170px;
     }
 
     #appView .featured-grid .card-title-large-green {
