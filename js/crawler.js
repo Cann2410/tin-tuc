@@ -1,6 +1,7 @@
+
 /**
  * CRAWLER TIN TỨC DÂN TRÍ
- * Trích xuất nội dung bài báo và chuẩn hóa JSON.
+ * Lấy dữ liệu bài báo, làm sạch nội dung và chuẩn hóa JSON.
  */
 
 const CATEGORY_MAP = {
@@ -28,14 +29,14 @@ const CATEGORY_MAP = {
 };
 
 // ======================================================
-// 1. CÁC HÀM CHUẨN HÓA
+// 1. HÀM CHUẨN HÓA
 // ======================================================
 
 function cleanText(value) {
     return String(value || "")
         .replace(/\u00a0/g, " ")
-        .replace(/[\t ]+/g, " ")
         .replace(/\r/g, "")
+        .replace(/[ \t]+/g, " ")
         .replace(/\n[ \t]+/g, "\n")
         .trim();
 }
@@ -100,10 +101,10 @@ function titleFromSlug(slug) {
 function normalizeExcerpt(text) {
     let excerpt = cleanText(text);
 
-    // Không để metadata thời gian lọt vào phần mô tả.
     excerpt = excerpt
         .replace(/^Published Time:\s*/i, "")
         .replace(/^Title:\s*/i, "")
+        .replace(/^Markdown Content:\s*/i, "")
         .trim();
 
     if (!excerpt) return "";
@@ -118,108 +119,99 @@ function normalizeExcerpt(text) {
 function normalizeContent(text) {
     if (!text) return "";
 
-    const unwantedLinePatterns = [
-        /^quảng cáo của\b/i,
-        /^dt inter\b/i,
-        /^xu hướng$/i,
-        /^xem thêm$/i,
-        /^đọc nhiều trong\b/i,
-        /^bình luận\s*\(/i,
-        /^gửi$/i,
-        /^theo dõi dân trí/i,
+    const lines = String(text)
+        .replace(/\r/g, "")
+        .split("\n")
+        .map(line => line.trim());
+
+    const stopPatterns = [
         /^thêm dân trí trên google/i,
         /^không bỏ lỡ tin mới/i,
-        /^hướng dẫn:/i,
-        /^đóng thêm dân trí/i,
+        /^đọc nhiều trong\b/i,
+        /^bình luận\s*\(/i,
         /^sponsored links$/i,
         /^promoted links$/i,
         /^you may like$/i,
         /^you may also like$/i,
         /^related articles$/i,
-        /^tags?:$/i,
+        /^bài liên quan/i,
+        /^tin liên quan/i,
+        /^by taboola$/i,
         /^©\s*2005-/i,
         /^cơ quan của bộ nội vụ/i,
         /^tổng biên tập:/i,
         /^giấy phép hoạt động/i,
         /^địa chỉ tòa soạn:/i,
         /^văn phòng đại diện/i,
-        /^hotline/i,
         /^liên hệ quảng cáo/i,
+        /^theo dõi dân trí/i,
         /^đọc báo dân trí trên mobile/i,
-        /^ios$/i,
-        /^android$/i,
-        /^audio\s*\d*$/i,
-        /^video\s*\d*$/i,
-        /^00:00/,
-        /^speed$/i,
-        /^normal$/i,
-        /^nam miền/i,
-        /^giọng nam/i,
-        /^giọng nữ/i,
-        /^in$/i,
+        /^quảng cáo của\b/i,
+        /^sponsored$/i,
+        /^advertisement$/i
+    ];
+
+    const unwantedPatterns = [
+        /^Published Time:/i,
+        /^URL Source:/i,
+        /^Markdown Content:/i,
+        /^quảng cáo của\b/i,
+        /^dt inter\b/i,
+        /^xu hướng$/i,
+        /^xem thêm$/i,
+        /^gửi$/i,
         /^facebook$/i,
         /^youtube$/i,
         /^tiktok$/i,
         /^telegram$/i,
-        /^theo dõi dân trí trên/i,
-        /^bấm tích vào ô/i
+        /^ios$/i,
+        /^android$/i,
+        /^normal$/i,
+        /^speed$/i,
+        /^giọng nam/i,
+        /^giọng nữ/i,
+        /^00:00/,
+        /^tags?:$/i
     ];
-
-    const lines = String(text)
-        .replace(/\r/g, "")
-        .split("\n")
-        .map(line => cleanText(line))
-        .filter(Boolean);
 
     const result = [];
     let previous = "";
 
     for (let line of lines) {
-        // Bỏ Markdown heading không cần thiết nhưng giữ nguyên nội dung.
-        line = line.replace(/^#{1,6}\s+/, "").trim();
+        line = line
+            .replace(/^#{1,6}\s+/, "")
+            .replace(/^\*\s+/, "")
+            .trim();
 
         if (!line) continue;
 
-        // Cắt tại phần kết thúc bài và nội dung đề xuất.
-        if (
-            /^thêm dân trí trên google/i.test(line) ||
-            /^không bỏ lỡ tin mới/i.test(line) ||
-            /^đọc nhiều trong\b/i.test(line) ||
-            /^bình luận\s*\(/i.test(line) ||
-            /^sponsored links$/i.test(line) ||
-            /^promoted links$/i.test(line) ||
-            /^you may like$/i.test(line) ||
-            /^you may also like$/i.test(line)
-        ) {
+        // Dừng trước phần nội dung đề xuất hoặc chân trang.
+        if (stopPatterns.some(pattern => pattern.test(line))) {
             break;
         }
 
-        if (unwantedLinePatterns.some(pattern => pattern.test(line))) {
+        if (unwantedPatterns.some(pattern => pattern.test(line))) {
             continue;
         }
 
-        // Bỏ các dòng điều hướng Markdown.
+        // Bỏ liên kết điều hướng và URL đứng riêng.
         if (/^\[.*\]\(https?:\/\/[^)]+\)$/.test(line)) continue;
         if (/^https?:\/\/\S+$/i.test(line)) continue;
         if (/^!\[.*\]\(.*\)$/.test(line)) continue;
-        if (/^\*{1,2}$/.test(line)) continue;
 
-        // Bỏ dòng chỉ chứa tên menu, nếu xuất hiện trong nội dung.
-        if (/^(trang chủ|mới nhất|sự kiện|thế giới|thời sự|kinh doanh|giải trí|thể thao|giáo dục|du lịch|pháp luật|sức khỏe)$/i.test(line)) {
+        // Bỏ một số tên menu thường xuất hiện ở đầu trang.
+        if (
+            /^(trang chủ|mới nhất|sự kiện|thế giới|thời sự|kinh doanh|giải trí|thể thao|giáo dục|du lịch|pháp luật|sức khỏe)$/i.test(line)
+        ) {
             continue;
         }
 
-        // Gỡ ký hiệu Markdown còn sót lại.
         line = line
-            .replace(/^\*\s+/, "")
-            .replace(/^[-•]\s+/, "")
             .replace(/\*\*/g, "")
             .replace(/^\[|\]$/g, "")
             .trim();
 
         if (line.length < 2) continue;
-
-        // Loại dòng lặp liền nhau.
         if (line === previous) continue;
 
         result.push(line);
@@ -230,10 +222,12 @@ function normalizeContent(text) {
 }
 
 function isValidArticleContent(article) {
-    if (!article || !article.title || !article.content) return false;
+    if (!article || !article.title || !article.content) {
+        return false;
+    }
 
-    const content = cleanText(article.content);
     const title = cleanText(article.title);
+    const content = cleanText(article.content);
 
     if (title.length < 8) return false;
     if (content.length < 150) return false;
@@ -246,11 +240,14 @@ function isValidArticleContent(article) {
         "Just a moment..."
     ];
 
-    if (badContent.some(value => content.includes(value))) return false;
+    if (badContent.some(value => content.includes(value))) {
+        return false;
+    }
 
-    // Nội dung có quá nhiều dấu hiệu menu/điều hướng là không hợp lệ.
-    const navCount = (content.match(/https?:\/\/dantri\.com\.vn\//gi) || []).length;
-    if (navCount > 8) return false;
+    const urlCount =
+        (content.match(/https?:\/\/dantri\.com\.vn\//gi) || []).length;
+
+    if (urlCount > 8) return false;
 
     return true;
 }
@@ -271,28 +268,26 @@ function buildArticle({
 }) {
     const info = getUrlInfo(url);
 
-    const cleanTitle = cleanText(title) || titleFromSlug(info.slug);
+    const cleanTitle = cleanText(title);
     const cleanExcerpt = normalizeExcerpt(excerpt);
     const cleanBody = normalizeContent(content);
     const cleanImage = cleanDantriImageUrl(image);
 
-    const article = {
+    return {
         id: info.id,
-        title: cleanTitle,
+        title: cleanTitle || titleFromSlug(info.slug),
         slug: info.slug,
         excerpt: cleanExcerpt,
         content: cleanBody,
-        author: cleanText(author) || "Dân trí",
+        author: cleanText(author),
         category: cleanText(category) || info.categoryInfo.title,
-        publishedAt: cleanText(publishedAt) || "",
+        publishedAt: cleanText(publishedAt),
         source: "dantri.com.vn",
         url,
         image: cleanImage,
         thumbnail: cleanImage,
         categoryId: info.categoryInfo.id
     };
-
-    return article;
 }
 
 // ======================================================
@@ -300,7 +295,11 @@ function buildArticle({
 // ======================================================
 
 function parseDantriDom(htmlText, url) {
-    const doc = new DOMParser().parseFromString(htmlText, "text/html");
+    const doc = new DOMParser().parseFromString(
+        htmlText,
+        "text/html"
+    );
+
     const info = getUrlInfo(url);
 
     const getText = selector => {
@@ -310,7 +309,9 @@ function parseDantriDom(htmlText, url) {
 
     const getMeta = selector => {
         const element = doc.querySelector(selector);
-        return element ? cleanText(element.getAttribute("content")) : "";
+        return element
+            ? cleanText(element.getAttribute("content"))
+            : "";
     };
 
     const title =
@@ -332,7 +333,6 @@ function parseDantriDom(htmlText, url) {
         getText(".sapo") ||
         "";
 
-    // Ưu tiên đúng phần thân bài, tuyệt đối không ưu tiên toàn bộ trang.
     const contentSelectors = [
         "#articleContent [data-slot='content']",
         "#articleContent .singular-content",
@@ -390,36 +390,42 @@ function parseDantriDom(htmlText, url) {
             "[id*='ads']"
         ].join(",")).forEach(node => node.remove());
 
-        const paragraphs = Array.from(clone.querySelectorAll("p"))
-            .map(p => cleanText(p.textContent))
-            .filter(text => text.length >= 2);
+        // Giữ đoạn văn và tiêu đề phụ trong thân bài.
+        const blocks = Array.from(
+            clone.querySelectorAll("p, h2, h3, h4, blockquote")
+        );
 
-        const candidate = paragraphs.join("\n\n");
+        const candidate = blocks
+            .map(node => cleanText(node.textContent))
+            .filter(text => text.length >= 2)
+            .join("\n\n");
 
-        // Chọn phần thân bài đủ dài và có vẻ là nội dung thật.
         if (candidate.length > contentText.length) {
             contentText = candidate;
         }
 
-        // Đã có nội dung tương đối đầy đủ thì không cần dùng selector rộng hơn.
         if (contentText.length > 500) break;
     }
 
-    // Chỉ fallback khi các selector thân bài không hoạt động.
-    // Không lấy toàn bộ body hoặc toàn bộ #articleContent vì có thể chứa menu.
+    // Dự phòng: chỉ lấy các đoạn văn trong article,
+    // không lấy toàn bộ document.body.
     if (contentText.length < 150) {
         const article = doc.querySelector("article");
+
         if (article) {
             const clone = article.cloneNode(true);
 
             clone.querySelectorAll(
                 "script, style, iframe, nav, header, footer, button, form, " +
-                ".related-news, .relate-container, .comments, [class*='related'], " +
-                "[class*='comment'], [class*='advert'], [class*='banner']"
+                ".related-news, .relate-container, .comments, " +
+                "[class*='related'], [class*='comment'], " +
+                "[class*='advert'], [class*='banner']"
             ).forEach(node => node.remove());
 
-            contentText = Array.from(clone.querySelectorAll("p"))
-                .map(p => cleanText(p.textContent))
+            contentText = Array.from(
+                clone.querySelectorAll("p, h2, h3, h4, blockquote")
+            )
+                .map(node => cleanText(node.textContent))
                 .filter(text => text.length >= 2)
                 .join("\n\n");
         }
@@ -431,8 +437,7 @@ function parseDantriDom(htmlText, url) {
         getText(".author-name") ||
         getText(".singular-author") ||
         getText(".e-magazine__author") ||
-        getText("[itemprop='author']") ||
-        "Dân trí";
+        getText("[itemprop='author']");
 
     const category =
         getText("ul.breadcrumbs li:last-child a") ||
@@ -452,14 +457,22 @@ function parseDantriDom(htmlText, url) {
         const rawTime = cleanText(timeElement.textContent);
 
         if (dateTime && !Number.isNaN(Date.parse(dateTime))) {
-            const date = new Date(dateTime);
-            publishedAt =
-                date.getFullYear() + "-" +
-                String(date.getMonth() + 1).padStart(2, "0") + "-" +
-                String(date.getDate()).padStart(2, "0") + " " +
-                String(date.getHours()).padStart(2, "0") + ":" +
-                String(date.getMinutes()).padStart(2, "0");
-        } else {
+            // Giữ múi giờ địa phương trong chuỗi hiển thị nếu có.
+            const match = dateTime.match(
+                /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/
+            );
+
+            if (match) {
+                publishedAt =
+                    match[1] + "-" +
+                    match[2] + "-" +
+                    match[3] + " " +
+                    match[4] + ":" +
+                    match[5];
+            }
+        }
+
+        if (!publishedAt) {
             const match = rawTime.match(
                 /(\d{1,2})\/(\d{1,2})\/(\d{4})\s*[-–,]?\s*(\d{1,2}:\d{2})/
             );
@@ -477,10 +490,15 @@ function parseDantriDom(htmlText, url) {
     const image =
         getMeta('meta[property="og:image"]') ||
         getMeta('meta[name="twitter:image"]') ||
-        getImgSrcFromElement(doc.querySelector("#articleContent figure img")) ||
-        getImgSrcFromElement(doc.querySelector(".singular-content figure img")) ||
-        getImgSrcFromElement(doc.querySelector(".singular-content img")) ||
-        "";
+        getImgSrcFromElement(
+            doc.querySelector("#articleContent figure img")
+        ) ||
+        getImgSrcFromElement(
+            doc.querySelector(".singular-content figure img")
+        ) ||
+        getImgSrcFromElement(
+            doc.querySelector(".singular-content img")
+        );
 
     return buildArticle({
         url,
@@ -511,13 +529,11 @@ function parseJinaMarkdown(markdown, url) {
     let image = "";
     let publishedAt = "";
     let author = "";
-    let category = "";
-    let titleIndex = -1;
+    let excerpt = "";
+    let category = info.categoryInfo.title;
 
-    // Lấy tiêu đề chính từ metadata hoặc H1.
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-
+    // Đọc metadata và tiêu đề.
+    for (const line of lines) {
         if (!title && /^Title:\s*/i.test(line)) {
             title = line.replace(/^Title:\s*/i, "").trim();
         }
@@ -526,45 +542,13 @@ function parseJinaMarkdown(markdown, url) {
             title = line.replace(/^#\s+/, "").trim();
         }
 
-        if (!image && /^!\[/.test(line)) {
-            const match = line.match(/!\[[^\]]*\]\((https?:\/\/[^)]+)\)/i);
+        if (!image) {
+            const match = line.match(
+                /!\[[^\]]*\]\((https?:\/\/[^)]+)\)/i
+            );
+
             if (match) image = match[1];
         }
-    }
-
-    // Tìm vị trí tiêu đề bài báo để không lấy menu trước đó.
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i]
-            .replace(/^#{1,6}\s+/, "")
-            .replace(/\*\*/g, "")
-            .trim();
-
-        if (
-            line &&
-            title &&
-            line.toLocaleLowerCase() === title.toLocaleLowerCase()
-        ) {
-            titleIndex = i;
-            break;
-        }
-    }
-
-    // Nếu metadata không khớp, tìm H1.
-    if (titleIndex < 0) {
-        titleIndex = lines.findIndex(line => /^#\s+/.test(line));
-    }
-
-    if (titleIndex < 0) {
-        titleIndex = 0;
-    }
-
-    // Lấy ngày xuất bản và chuyên mục từ phần gần tiêu đề.
-    for (
-        let i = Math.max(0, titleIndex - 10);
-        i < Math.min(lines.length, titleIndex + 5);
-        i++
-    ) {
-        const line = lines[i];
 
         if (!publishedAt) {
             const match = line.match(
@@ -579,21 +563,38 @@ function parseJinaMarkdown(markdown, url) {
                     match[4];
             }
         }
-
-        if (
-            !category &&
-            /Thế giới|Thời sự|Kinh doanh|Bất động sản|Thể thao|Sức khỏe|Giáo dục|Du lịch|Pháp luật|Đời sống|Công nghệ|Giải trí/i.test(line) &&
-            !line.includes("http")
-        ) {
-            category = line.replace(/^\*+\s*/, "").trim();
-        }
     }
 
-    // Bắt đầu phần nội dung sau tiêu đề.
-    let bodyLines = lines.slice(titleIndex + 1);
+    // Xác định dòng tiêu đề trong Markdown.
+    let titleIndex = lines.findIndex(line => {
+        const text = line
+            .replace(/^#{1,6}\s+/, "")
+            .replace(/\*\*/g, "")
+            .trim();
 
-    // Bỏ phần đầu trang trước khi gặp mô tả bài báo.
-    const excerptIndex = bodyLines.findIndex(line => {
+        return title &&
+            text.toLocaleLowerCase() === title.toLocaleLowerCase();
+    });
+
+    if (titleIndex < 0) {
+        titleIndex = lines.findIndex(line => /^#\s+/.test(line));
+    }
+
+    if (titleIndex < 0) titleIndex = 0;
+
+    // Tìm thông tin tác giả gần tiêu đề.
+    const authorMatch = rawText.match(
+        /\[([^\]]{2,60})\]\(https?:\/\/dantri\.com\.vn\/tac-gia\/[^)]+\)/i
+    );
+
+    if (authorMatch) {
+        author = cleanText(authorMatch[1]);
+    }
+
+    // Tìm mô tả bài báo.
+    const bodyCandidates = lines.slice(titleIndex + 1);
+
+    const sapoIndex = bodyCandidates.findIndex(line => {
         const text = line.replace(/^#{1,6}\s+/, "").trim();
 
         return (
@@ -602,26 +603,39 @@ function parseJinaMarkdown(markdown, url) {
         );
     });
 
-    let excerpt = "";
-    if (excerptIndex >= 0) {
-        excerpt = bodyLines[excerptIndex]
+    let bodyLines = [];
+
+    if (sapoIndex >= 0) {
+        excerpt = bodyCandidates[sapoIndex]
             .replace(/^#{1,6}\s+/, "")
             .trim();
 
-        bodyLines = bodyLines.slice(excerptIndex + 1);
+        bodyLines = bodyCandidates.slice(sapoIndex + 1);
     } else {
-        // Nếu không thấy sapo, chỉ giữ nội dung sau tiêu đề.
-        bodyLines = bodyLines.filter(line => {
-            if (!line) return true;
-            if (/^Published Time:/i.test(line)) return false;
-            if (/^URL Source:/i.test(line)) return false;
-            if (/^Markdown Content:/i.test(line)) return false;
-            if (/^Title:/i.test(line)) return false;
-            return true;
+        // Nếu không có sapo riêng, tìm đoạn văn đầu tiên đủ dài.
+        const firstParagraphIndex = bodyCandidates.findIndex(line => {
+            const text = line
+                .replace(/^#{1,6}\s+/, "")
+                .replace(/\*\*/g, "")
+                .trim();
+
+            return (
+                text.length >= 100 &&
+                !/^Title:/i.test(text) &&
+                !/^URL Source:/i.test(text) &&
+                !/^Published Time:/i.test(text) &&
+                !/^Markdown Content:/i.test(text) &&
+                !/^https?:\/\//i.test(text) &&
+                !/^\[.*\]\(https?:\/\/[^)]+\)$/.test(text)
+            );
         });
+
+        if (firstParagraphIndex >= 0) {
+            bodyLines = bodyCandidates.slice(firstParagraphIndex);
+        }
     }
 
-    // Dừng trước khu vực bài liên quan / bình luận / quảng cáo.
+    // Loại metadata và menu trước khi ghép nội dung.
     const stopPatterns = [
         /^thêm dân trí trên google/i,
         /^không bỏ lỡ tin mới/i,
@@ -633,12 +647,19 @@ function parseJinaMarkdown(markdown, url) {
         /^promoted links$/i,
         /^you may like$/i,
         /^you may also like$/i,
+        /^related articles$/i,
+        /^bài liên quan/i,
+        /^tin liên quan/i,
         /^tags?:$/i,
         /^by taboola$/i,
-        /^©\s*2005-/i
+        /^©\s*2005-/i,
+        /^cơ quan của bộ nội vụ/i,
+        /^tổng biên tập:/i,
+        /^giấy phép hoạt động/i,
+        /^liên hệ quảng cáo/i
     ];
 
-    const body = [];
+    const cleanedLines = [];
 
     for (const line of bodyLines) {
         const plain = line
@@ -650,35 +671,36 @@ function parseJinaMarkdown(markdown, url) {
             break;
         }
 
-        body.push(line);
+        if (/^Title:/i.test(plain)) continue;
+        if (/^URL Source:/i.test(plain)) continue;
+        if (/^Published Time:/i.test(plain)) continue;
+        if (/^Markdown Content:/i.test(plain)) continue;
+        if (/^https?:\/\/\S+$/i.test(plain)) continue;
+        if (/^\[.*\]\(https?:\/\/[^)]+\)$/.test(plain)) continue;
+        if (/^!\[.*\]\(.*\)$/.test(plain)) continue;
+
+        cleanedLines.push(line);
     }
 
-    let content = normalizeContent(body.join("\n"));
+    const content = normalizeContent(cleanedLines.join("\n"));
 
-    // Lấy tác giả nếu Markdown có đường dẫn tác giả.
-    const authorMatch = rawText.match(
-        /\[([^\]]{2,60})\]\(https?:\/\/dantri\.com\.vn\/tac-gia\/[^)]+\)/i
-    );
-
-    if (authorMatch) {
-        author = cleanText(authorMatch[1]);
-    }
-
-    // Lấy ảnh từ Open Graph trong văn bản nếu có.
+    // Lấy ảnh CDN nếu chưa tìm thấy ảnh Markdown.
     if (!image) {
         const imageMatch = rawText.match(
-            /https?:\/\/cdnphoto\.dantri\.com\.vn\/[^\s)>"']+/i
+            /https?:\/\/cdnphoto\.dantri\.com\.vn\/[^\s)"']+/i
         );
+
         if (imageMatch) image = imageMatch[0];
     }
 
+    // Không tự tạo tác giả hoặc ngày đăng giả.
     return buildArticle({
         url,
-        title: title || titleFromSlug(info.slug),
+        title,
         excerpt,
         content,
-        author: author || "Dân trí",
-        category: category || info.categoryInfo.title,
+        author,
+        category,
         publishedAt,
         image
     });
@@ -739,7 +761,10 @@ async function fetchHtmlWithMultiProxy(url) {
                 throw new Error("Jina không trả về nội dung hợp lệ");
             }
 
-            return { type: "markdown", content: text };
+            return {
+                type: "markdown",
+                content: text
+            };
         },
 
         async () => {
@@ -755,7 +780,10 @@ async function fetchHtmlWithMultiProxy(url) {
                 throw new Error("AllOrigins không trả về HTML hợp lệ");
             }
 
-            return { type: "html", content: text };
+            return {
+                type: "html",
+                content: text
+            };
         },
 
         async () => {
@@ -771,12 +799,14 @@ async function fetchHtmlWithMultiProxy(url) {
                 throw new Error("CodeTabs không trả về HTML hợp lệ");
             }
 
-            return { type: "html", content: text };
+            return {
+                type: "html",
+                content: text
+            };
         }
     ];
 
-    // Thử lần lượt từng nguồn; không chọn một kết quả ngẫu nhiên
-    // chỉ vì nó trả về nhanh hơn.
+    // Thử lần lượt các nguồn; chỉ trả về dữ liệu khi có phản hồi.
     for (const proxy of proxies) {
         try {
             const result = await proxy();
@@ -785,7 +815,7 @@ async function fetchHtmlWithMultiProxy(url) {
                 return result;
             }
         } catch (error) {
-            console.warn("Một nguồn cào bị lỗi:", error.message);
+            console.warn("Nguồn cào bị lỗi:", error.message);
         }
     }
 
@@ -802,7 +832,7 @@ async function getArticle(url, manualHtml = "") {
     try {
         parsedUrl = new URL(String(url || "").trim());
     } catch (error) {
-        alert("URL không hợp lệ. Hãy nhập đường dẫn bài báo Dân trí.");
+        alert("URL không hợp lệ. Hãy nhập đường dẫn bài báo Dân Trí.");
         return null;
     }
 
@@ -820,15 +850,29 @@ async function getArticle(url, manualHtml = "") {
     const articleUrl = parsedUrl.href;
 
     // Ưu tiên HTML người dùng tự dán.
-    if (typeof manualHtml === "string" && manualHtml.trim().length > 300) {
+    if (
+        typeof manualHtml === "string" &&
+        manualHtml.trim().length > 300
+    ) {
         try {
-            const manualResult = parseDantriDom(manualHtml, articleUrl);
+            const manualResult = parseDantriDom(
+                manualHtml,
+                articleUrl
+            );
 
             if (isValidArticleContent(manualResult)) {
                 return manualResult;
             }
+
+            console.warn(
+                "HTML dự phòng không có đủ nội dung:",
+                manualResult
+            );
         } catch (error) {
-            console.warn("Không phân tích được HTML đã dán:", error);
+            console.warn(
+                "Không phân tích được HTML dự phòng:",
+                error
+            );
         }
     }
 
@@ -836,8 +880,8 @@ async function getArticle(url, manualHtml = "") {
 
     if (!response) {
         alert(
-            "Không lấy được bài báo tự động. Proxy có thể bị chặn hoặc lỗi. " +
-            "Hãy mở bài báo, nhấn Ctrl+U, sao chép mã nguồn rồi dán vào ô HTML dự phòng."
+            "Không lấy được bài báo tự động. Các proxy có thể bị chặn " +
+            "hoặc không phản hồi. Hãy thử lại hoặc dùng chức năng HTML dự phòng."
         );
         return null;
     }
@@ -846,22 +890,33 @@ async function getArticle(url, manualHtml = "") {
 
     try {
         if (response.type === "markdown") {
-            article = parseJinaMarkdown(response.content, articleUrl);
+            article = parseJinaMarkdown(
+                response.content,
+                articleUrl
+            );
         } else if (response.type === "html") {
-            article = parseDantriDom(response.content, articleUrl);
+            article = parseDantriDom(
+                response.content,
+                articleUrl
+            );
         }
     } catch (error) {
         console.error("Lỗi phân tích bài báo:", error);
-        alert("Có lỗi khi phân tích nội dung bài báo. Hãy thử dán HTML dự phòng.");
+
+        alert(
+            "Có lỗi khi phân tích bài báo. Hãy thử lại hoặc dùng HTML dự phòng."
+        );
+
         return null;
     }
 
     if (!isValidArticleContent(article)) {
-        console.warn("Bài báo không đạt kiểm tra nội dung:", article);
+        console.warn("Bài báo chưa đạt kiểm tra nội dung:", article);
 
         alert(
-            "Đã nhận được dữ liệu nhưng nội dung bài báo chưa đầy đủ. " +
-            "Hệ thống không lưu dữ liệu lỗi. Hãy thử lại hoặc dán HTML bài báo."
+            "Đã nhận dữ liệu nhưng nội dung bài báo chưa đầy đủ. " +
+            "Hệ thống không trả về bài không đạt kiểm tra. " +
+            "Hãy thử lại hoặc dùng HTML dự phòng."
         );
 
         return null;
