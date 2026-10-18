@@ -72,7 +72,7 @@ function cleanDantriImageUrl(rawUrl) {
     try {
         const parsed = new URL(value);
 
-        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        if (!["http:", "https:"].includes(parsed.protocol)) {
             return "";
         }
 
@@ -101,6 +101,7 @@ function getUrlInfo(url) {
     const categorySlug = parts.length > 1 ? parts[0] : "thoi-su";
 
     const idMatch = fileName.match(/(\d+)\.htm$/i);
+
     const articleId = idMatch ? idMatch[1] : "";
 
     const slug = fileName
@@ -126,15 +127,13 @@ function titleFromSlug(slug) {
 }
 
 function normalizeExcerpt(value) {
-    let excerpt = cleanText(value)
+    return cleanText(value)
         .replace(/^sapo:\s*/i, "")
         .replace(/^mô tả:\s*/i, "")
         .replace(/^#{1,6}\s+/, "")
-        .replace(/\[(.*?)\]\((https?:\/\/[^)]+)\)/g, "$1")
+        .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, "$1")
         .replace(/\*\*/g, "")
         .trim();
-
-    return excerpt;
 }
 
 function normalizeDate(value) {
@@ -171,7 +170,7 @@ function normalizeDate(value) {
 }
 
 // ======================================================
-// 3. LÀM SẠCH NỘI DUNG BÀI BÁO
+// 3. LÀM SẠCH NỘI DUNG
 // ======================================================
 
 function normalizeContent(text) {
@@ -242,21 +241,18 @@ function normalizeContent(text) {
             continue;
         }
 
-        // Bỏ URL hoặc ảnh Markdown đứng riêng.
         if (/^https?:\/\/\S+$/i.test(line)) continue;
         if (/^!\[[^\]]*\]\([^)]*\)$/.test(line)) continue;
         if (/^\[[^\]]*\]\(https?:\/\/[^)]+\)$/.test(line)) continue;
 
-        // Bỏ các dòng menu đơn lẻ.
         if (/^(trang chủ|mới nhất|sự kiện|thế giới|thời sự|kinh doanh|giải trí|thể thao|giáo dục|du lịch|pháp luật|sức khỏe)$/i.test(line)) {
             continue;
         }
 
-        // Giữ nội dung chữ, bỏ định dạng Markdown.
         line = line
             .replace(/\*\*/g, "")
             .replace(/`/g, "")
-            .replace(/\[(.*?)\]\((https?:\/\/[^)]+)\)/g, "$1")
+            .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, "$1")
             .trim();
 
         if (line.length < 2 || line === previous) continue;
@@ -284,11 +280,9 @@ function isValidArticleContent(article) {
         "Just a moment..."
     ];
 
-    if (badContent.some(value => article.content.includes(value))) {
-        return false;
-    }
-
-    return true;
+    return !badContent.some(value =>
+        article.content.includes(value)
+    );
 }
 
 // ======================================================
@@ -324,8 +318,6 @@ function buildArticle({
         url,
         image: cleanImage,
         thumbnail: cleanImage,
-
-        // Luôn là mã danh mục, ví dụ: "the-gioi".
         categoryId: info.categorySlug
     };
 }
@@ -349,7 +341,9 @@ function parseDantriDom(htmlText, url) {
 
     const getMeta = selector => {
         const element = doc.querySelector(selector);
-        return element ? cleanText(element.getAttribute("content")) : "";
+        return element
+            ? cleanText(element.getAttribute("content"))
+            : "";
     };
 
     const title = cleanTitle(
@@ -363,15 +357,16 @@ function parseDantriDom(htmlText, url) {
         titleFromSlug(info.slug)
     );
 
-    const excerpt =
+    const excerpt = normalizeExcerpt(
         getMeta('meta[property="og:description"]') ||
         getMeta('meta[name="description"]') ||
-        getText("#articleContent [data-slot=" + '"sapo"' + "]") ||
+        getText("#articleContent [data-slot='sapo']") ||
         getText("#articleContent .singular-sapo") ||
         getText(".singular-sapo") ||
         getText(".e-magazine__sapo") ||
         getText(".sapo") ||
-        "";
+        ""
+    );
 
     const contentSelectors = [
         "#articleContent [data-slot='content']",
@@ -426,7 +421,6 @@ function parseDantriDom(htmlText, url) {
         if (contentText.length > 500) break;
     }
 
-    // Dự phòng nếu cấu trúc HTML thay đổi.
     if (contentText.length < 150) {
         const article = doc.querySelector("article");
 
@@ -448,7 +442,7 @@ function parseDantriDom(htmlText, url) {
         }
     }
 
-    // Tác giả.
+    // Tác giả
     let author =
         getMeta('meta[name="author"]') ||
         getMeta('meta[property="article:author"]') ||
@@ -460,22 +454,20 @@ function parseDantriDom(htmlText, url) {
         getText("[itemprop='author']");
 
     if (!author) {
-        const authorLink = doc.querySelector(
-            'a[href*="/tac-gia/"]'
-        );
+        const authorLink = doc.querySelector('a[href*="/tac-gia/"]');
 
         if (authorLink) {
             author = cleanText(authorLink.textContent);
         }
     }
 
-    // Danh mục.
+    // Danh mục
     const category =
         getText("ul.breadcrumbs li:last-child a") ||
         getText(".breadcrumbs a:last-child") ||
         info.categoryInfo.title;
 
-    // Ngày đăng.
+    // Ngày đăng
     let publishedAt =
         getMeta('meta[property="article:published_time"]') ||
         getMeta('meta[property="og:article:published_time"]') ||
@@ -488,15 +480,14 @@ function parseDantriDom(htmlText, url) {
         getText(".author-time") ||
         "";
 
-    // Tìm thêm trong các thẻ time nếu chưa có ngày.
-    if (!publishedAt) {
+    if (!normalizeDate(publishedAt)) {
         const timeElements = Array.from(doc.querySelectorAll("time"));
 
         const timeElement = timeElements.find(element => {
-            const value = element.getAttribute("datetime") ||
-                element.textContent;
-
-            return Boolean(normalizeDate(value));
+            return Boolean(normalizeDate(
+                element.getAttribute("datetime") ||
+                element.textContent
+            ));
         });
 
         if (timeElement) {
@@ -506,19 +497,20 @@ function parseDantriDom(htmlText, url) {
         }
     }
 
-    // Ảnh đại diện.
-    const image =
+    // Ảnh đại diện: ưu tiên metadata của bài báo
+    let image =
         getMeta('meta[property="og:image"]') ||
         getMeta('meta[name="twitter:image"]') ||
-        getImgSrcFromElement(
-            doc.querySelector("#articleContent figure img")
-        ) ||
-        getImgSrcFromElement(
-            doc.querySelector(".singular-content figure img")
-        ) ||
-        getImgSrcFromElement(
-            doc.querySelector(".singular-content img")
-        );
+        "";
+
+    if (!image) {
+        const imageElement =
+            doc.querySelector("#articleContent figure img") ||
+            doc.querySelector(".singular-content figure img") ||
+            doc.querySelector(".singular-content img");
+
+        image = getImgSrcFromElement(imageElement);
+    }
 
     return buildArticle({
         url,
@@ -550,55 +542,45 @@ function parseJinaMarkdown(markdown, url) {
     let publishedAt = "";
     let author = "";
     let excerpt = "";
-    let category = info.categoryInfo.title;
+    const category = info.categoryInfo.title;
 
-    // Đọc metadata từ Jina.
+    // Đọc metadata
     for (const line of lines) {
         if (!title && /^Title:\s*/i.test(line)) {
-            title = cleanTitle(
-                line.replace(/^Title:\s*/i, "")
-            );
+            title = cleanTitle(line.replace(/^Title:\s*/i, ""));
         }
 
         if (!publishedAt && /^Published Time:\s*/i.test(line)) {
-            publishedAt = line
-                .replace(/^Published Time:\s*/i, "")
-                .trim();
+            publishedAt = line.replace(/^Published Time:\s*/i, "").trim();
         }
 
-        if (!image) {
-            const match = line.match(
-                /!\[[^\]]*\]\((https?:\/\/[^)]+)\)/i
-            );
-
-            if (match) image = match[1];
+        // Ưu tiên ảnh đại diện được ghi trong metadata
+        if (!image && /^og:image:\s*/i.test(line)) {
+            image = line.replace(/^og:image:\s*/i, "").trim();
         }
     }
 
-    // Xác định tiêu đề trong nội dung.
+    // Xác định tiêu đề
     let titleIndex = lines.findIndex(line => {
         const text = cleanTitle(
             line.replace(/^#{1,6}\s+/, "").replace(/\*\*/g, "")
         );
 
-        return title &&
-            text.toLocaleLowerCase() === title.toLocaleLowerCase();
+        return title && text.toLowerCase() === title.toLowerCase();
     });
 
     if (titleIndex < 0) {
         titleIndex = lines.findIndex(line => /^#\s+/.test(line));
 
         if (titleIndex >= 0) {
-            title = cleanTitle(
-                lines[titleIndex].replace(/^#\s+/, "")
-            );
+            title = cleanTitle(lines[titleIndex].replace(/^#\s+/, ""));
         }
     }
 
     if (!title) title = titleFromSlug(info.slug);
     if (titleIndex < 0) titleIndex = 0;
 
-    // Tìm tác giả qua liên kết tác giả.
+    // Tác giả qua liên kết
     const authorMatch = rawText.match(
         /\[([^\]]{2,60})\]\(https?:\/\/(?:www\.)?dantri\.com\.vn\/tac-gia\/[^)]+\)/i
     );
@@ -607,10 +589,10 @@ function parseJinaMarkdown(markdown, url) {
         author = cleanText(authorMatch[1]);
     }
 
-    // Tìm tác giả nếu Markdown ghi rõ.
+    // Tác giả ghi trực tiếp
     if (!author) {
         const authorLine = lines
-            .slice(titleIndex + 1, titleIndex + 20)
+            .slice(titleIndex + 1, titleIndex + 25)
             .find(line => /^(tác giả|by)\s*:/i.test(line));
 
         if (authorLine) {
@@ -620,15 +602,13 @@ function parseJinaMarkdown(markdown, url) {
         }
     }
 
-    // Nếu metadata chưa có ngày, tìm ngày trong nội dung.
-    if (!publishedAt) {
-        const dateLine = lines.find(line => {
-            return Boolean(normalizeDate(line)) &&
-                (
-                    /^\d{4}-\d{2}-\d{2}/.test(line) ||
-                    /^\d{1,2}\/\d{1,2}\/\d{4}/.test(line)
-                );
-        });
+    // Ngày đăng trong nội dung nếu metadata chưa có
+    if (!normalizeDate(publishedAt)) {
+        const dateLine = lines.find(line =>
+            Boolean(normalizeDate(line)) &&
+            (/^\d{4}-\d{2}-\d{2}/.test(line) ||
+             /^\d{1,2}\/\d{1,2}\/\d{4}/.test(line))
+        );
 
         if (dateLine) publishedAt = dateLine;
     }
@@ -647,7 +627,7 @@ function parseJinaMarkdown(markdown, url) {
         );
     };
 
-    // Ưu tiên đoạn sapo có tiền tố Dân trí.
+    // Tìm sapo
     const sapoIndex = bodyCandidates.findIndex(line => {
         const text = line
             .replace(/^#{1,6}\s+/, "")
@@ -669,8 +649,7 @@ function parseJinaMarkdown(markdown, url) {
 
         bodyLines = bodyCandidates.slice(sapoIndex + 1);
     } else {
-        // Không có tiền tố: chọn đoạn văn đầu tiên đủ dài,
-        // nhưng bỏ qua metadata, ảnh và đường dẫn.
+        // Nếu không có tiền tố Dân trí, lấy đoạn đầu đủ dài
         const firstParagraphIndex = bodyCandidates.findIndex(line => {
             const text = line
                 .replace(/^#{1,6}\s+/, "")
@@ -691,13 +670,13 @@ function parseJinaMarkdown(markdown, url) {
                 .replace(/^#{1,6}\s+/, "")
                 .trim();
 
-            bodyLines = bodyCandidates.slice(firstParagraphIndex + 1);
+            // Giữ lại đoạn được chọn trong thân bài
+            bodyLines = bodyCandidates.slice(firstParagraphIndex);
         } else {
             bodyLines = bodyCandidates;
         }
     }
 
-    // Làm sạch thân bài.
     const stopPatterns = [
         /^thêm dân trí trên google/i,
         /^không bỏ lỡ tin mới/i,
@@ -744,7 +723,6 @@ function parseJinaMarkdown(markdown, url) {
         if (/^https?:\/\/\S+$/i.test(plain)) continue;
         if (/^!\[[^\]]*\]\([^)]*\)$/.test(plain)) continue;
         if (/^\[[^\]]*\]\(https?:\/\/[^)]+\)$/.test(plain)) continue;
-
         if (/^(tác giả|by)\s*:/i.test(plain)) continue;
 
         if (/^\d{1,2}\/\d{1,2}\/\d{4}\s*[-–,]?\s*\d{1,2}:\d{2}$/.test(plain)) {
@@ -756,7 +734,18 @@ function parseJinaMarkdown(markdown, url) {
 
     const content = normalizeContent(cleanedLines.join("\n"));
 
-    // Tìm ảnh CDN nếu chưa có ảnh Markdown.
+    // Nếu chưa lấy được ảnh, tìm ảnh Markdown trong nội dung
+    if (!image) {
+        const markdownImageMatch = rawText.match(
+            /!\[[^\]]*\]\((https?:\/\/cdnphoto\.dantri\.com\.vn\/[^)\s]+)\)/i
+        );
+
+        if (markdownImageMatch) {
+            image = markdownImageMatch[1];
+        }
+    }
+
+    // Dự phòng tìm ảnh CDN
     if (!image) {
         const imageMatch = rawText.match(
             /https?:\/\/cdnphoto\.dantri\.com\.vn\/[^\s)"']+/i
@@ -798,9 +787,7 @@ function isBlockedResponse(text) {
 async function fetchWithTimeout(url, timeout = 15000) {
     const controller = new AbortController();
 
-    const timer = setTimeout(() => {
-        controller.abort();
-    }, timeout);
+    const timer = setTimeout(() => controller.abort(), timeout);
 
     try {
         const response = await fetch(url, {
@@ -835,10 +822,7 @@ async function fetchHtmlWithMultiProxy(url) {
                 throw new Error("Jina không trả về nội dung hợp lệ");
             }
 
-            return {
-                type: "markdown",
-                content: text
-            };
+            return { type: "markdown", content: text };
         },
 
         async () => {
@@ -854,10 +838,7 @@ async function fetchHtmlWithMultiProxy(url) {
                 throw new Error("AllOrigins không trả về HTML hợp lệ");
             }
 
-            return {
-                type: "html",
-                content: text
-            };
+            return { type: "html", content: text };
         },
 
         async () => {
@@ -873,10 +854,7 @@ async function fetchHtmlWithMultiProxy(url) {
                 throw new Error("CodeTabs không trả về HTML hợp lệ");
             }
 
-            return {
-                type: "html",
-                content: text
-            };
+            return { type: "html", content: text };
         }
     ];
 
@@ -920,16 +898,13 @@ async function getArticle(url, manualHtml = "") {
 
     const articleUrl = parsedUrl.href;
 
-    // Ưu tiên HTML người dùng tự cung cấp.
+    // Ưu tiên HTML người dùng tự cung cấp
     if (
         typeof manualHtml === "string" &&
         manualHtml.trim().length > 300
     ) {
         try {
-            const manualResult = parseDantriDom(
-                manualHtml,
-                articleUrl
-            );
+            const manualResult = parseDantriDom(manualHtml, articleUrl);
 
             if (isValidArticleContent(manualResult)) {
                 return manualResult;
@@ -940,10 +915,7 @@ async function getArticle(url, manualHtml = "") {
                 manualResult
             );
         } catch (error) {
-            console.warn(
-                "Không phân tích được HTML dự phòng:",
-                error
-            );
+            console.warn("Không phân tích được HTML dự phòng:", error);
         }
     }
 
@@ -966,16 +938,12 @@ async function getArticle(url, manualHtml = "") {
             : parseDantriDom(response.content, articleUrl);
     } catch (error) {
         console.error("Lỗi phân tích bài báo:", error);
-
         alert("Có lỗi khi phân tích bài báo. Hãy thử lại.");
         return null;
     }
 
     if (!isValidArticleContent(article)) {
-        console.warn(
-            "Bài báo chưa đạt kiểm tra nội dung:",
-            article
-        );
+        console.warn("Bài báo chưa đạt kiểm tra nội dung:", article);
 
         alert(
             "Đã tải được dữ liệu nhưng nội dung bài báo chưa đầy đủ. " +
@@ -987,4 +955,3 @@ async function getArticle(url, manualHtml = "") {
 
     return article;
 }
-
