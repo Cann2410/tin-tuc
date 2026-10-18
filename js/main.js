@@ -86,6 +86,35 @@ function makeClickArg(value) {
     return encodeURIComponent(String(value ?? ""));
 }
 
+// Chuyển đổi định dạng ngày giờ dạng chuỗi (kể cả dạng DD/MM/YYYY HH:MM) sang số milisecond
+function parseDateToTime(value) {
+    if (!value) return 0;
+    const str = String(value).trim();
+
+    // 1. Thử ISO YYYY-MM-DD
+    const isoDate = new Date(str.replace(" ", "T"));
+    if (!Number.isNaN(isoDate.getTime())) {
+        return isoDate.getTime();
+    }
+
+    // 2. Thử định dạng Việt Nam (19:21 18/10/2026 hoặc 18/10/2026 19:21)
+    const match = str.match(/(?:(\d{1,2}):(\d{1,2})\s+)?(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s*[-–—]?\s*(\d{1,2}):(\d{1,2}))?/);
+    if (match) {
+        const hours = parseInt(match[1] || match[6] || 0, 10);
+        const minutes = parseInt(match[2] || match[7] || 0, 10);
+        const day = parseInt(match[3], 10);
+        const month = parseInt(match[4], 10) - 1;
+        const year = parseInt(match[5], 10);
+
+        const d = new Date(year, month, day, hours, minutes);
+        if (!Number.isNaN(d.getTime())) {
+            return d.getTime();
+        }
+    }
+
+    return 0;
+}
+
 function normalizePost(post) {
     if (!post || typeof post !== "object") return null;
 
@@ -105,6 +134,16 @@ function normalizePost(post) {
         post.categoryId || category
     );
 
+    const subCategory = String(
+        post.subCategory ||
+        post.subCategoryName ||
+        ""
+    ).trim();
+
+    const subCategoryId = normalizeCategoryId(
+        post.subCategoryId || subCategory
+    );
+
     return {
         ...post,
         id,
@@ -112,6 +151,8 @@ function normalizePost(post) {
         slug: post.slug || id,
         category,
         categoryId,
+        subCategory,
+        subCategoryId,
         excerpt: String(post.excerpt || "")
             .trim()
             .replace(/^(\(Dân trí\)|Dân trí)\s*[-–—]\s*/i, ""),
@@ -173,28 +214,67 @@ function isPostInCategory(post, catId) {
 
     const targetId = normalizeCategoryId(catId);
 
-    if (!targetId || targetId === "home") return false;
+    if (!targetId || targetId === "home" || targetId === "trang-chu" || targetId === "moi-nhat") {
+        return true;
+    }
 
     const normalizedPost = normalizePost(post);
     if (!normalizedPost) return false;
 
-    if (targetId === "moi-nhat") return true;
+    const postCatId = normalizedPost.categoryId;
+    const postSubCatId = normalizedPost.subCategoryId;
 
-    return (
-        normalizeCategoryId(normalizedPost.categoryId) === targetId ||
-        normalizeCategoryId(normalizedPost.category) === targetId
-    );
+    // Khớp danh mục chính hoặc danh mục con
+    if (postCatId === targetId || postSubCatId === targetId) {
+        return true;
+    }
+
+    if (
+        normalizeCategoryId(normalizedPost.category) === targetId ||
+        normalizeCategoryId(normalizedPost.subCategory) === targetId
+    ) {
+        return true;
+    }
+
+    const categories = getCategories();
+
+    function findCategory(items, id) {
+        for (const item of items || []) {
+            if (normalizeCategoryId(item.id) === id) return item;
+            const found = findCategory(item.children, id);
+            if (found) return found;
+        }
+        return null;
+    }
+
+    function getAllChildIds(category) {
+        let ids = [];
+        for (const child of category.children || []) {
+            ids.push(normalizeCategoryId(child.id));
+            ids = ids.concat(getAllChildIds(child));
+        }
+        return ids;
+    }
+
+    const targetCategory = findCategory(categories, targetId);
+    if (!targetCategory) return false;
+
+    // Chọn danh mục cha -> Hiển thị tất cả bài của các danh mục con
+    const childIds = getAllChildIds(targetCategory);
+    if (childIds.length > 0 && (childIds.includes(postCatId) || childIds.includes(postSubCatId))) {
+        return true;
+    }
+
+    return false;
 }
 
 function formatDate(value) {
     if (!value) return "";
 
-    const date = new Date(String(value).replace(" ", "T"));
+    const time = parseDateToTime(value);
+    if (time === 0) return String(value);
 
-    if (Number.isNaN(date.getTime())) {
-        return String(value);
-    }
-
+    const date = new Date(time);
     return date.toLocaleString("vi-VN", {
         day: "2-digit",
         month: "2-digit",
@@ -212,7 +292,6 @@ function getPostImage(post) {
     );
 }
 
-// Không tự thêm tiền tố Dân trí vào mô tả.
 function getExcerpt(post) {
     return String(post?.excerpt || "")
         .trim()
@@ -222,18 +301,14 @@ function getExcerpt(post) {
 
 function sortPostsByDate(posts) {
     return [...posts].sort((a, b) => {
-        const timeA = a.publishedAt
-            ? new Date(String(a.publishedAt).replace(" ", "T")).getTime()
-            : 0;
+        const timeA = parseDateToTime(a.publishedAt);
+        const timeB = parseDateToTime(b.publishedAt);
 
-        const timeB = b.publishedAt
-            ? new Date(String(b.publishedAt).replace(" ", "T")).getTime()
-            : 0;
+        if (timeA === timeB) {
+            return String(b.id || "").localeCompare(String(a.id || ""));
+        }
 
-        return (
-            (Number.isNaN(timeB) ? 0 : timeB) -
-            (Number.isNaN(timeA) ? 0 : timeA)
-        );
+        return timeB - timeA; // Sắp xếp giảm dần theo thời gian (mới nhất đứng đầu)
     });
 }
 
@@ -242,8 +317,6 @@ function sortPostsByDate(posts) {
    3. QUẢN LÝ LOCALSTORAGE
 ========================================= */
 
-// Sửa: luôn giữ các mục con mặc định khi menu cũ trong
-// LocalStorage chưa có children hoặc còn thiếu mục con.
 function getCategories() {
     let storedMenu = [];
 
@@ -291,7 +364,6 @@ function getCategories() {
             ? defaultItem.children
             : [];
 
-        // Giữ nguyên mục con hiện có, bổ sung mục con còn thiếu.
         const mergedChildren = [...existingChildren];
 
         defaultChildren.forEach(defaultChild => {
@@ -352,6 +424,17 @@ function savePostToStorage(newPost) {
         throw new Error("Bài viết thiếu tiêu đề hoặc nội dung.");
     }
 
+    // Tự gán ngày giờ hiện tại nếu bài crawl về bị thiếu/lỗi ngày tháng
+    if (!normalizedPost.publishedAt || parseDateToTime(normalizedPost.publishedAt) === 0) {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        normalizedPost.publishedAt = `${hours}:${minutes} ${day}/${month}/${year}`;
+    }
+
     const posts = getPosts();
 
     const index = posts.findIndex(
@@ -375,6 +458,12 @@ function savePostToStorage(newPost) {
     }
 
     return normalizedPost;
+}
+
+function resetDefaultData() {
+    localStorage.removeItem("categories");
+    localStorage.removeItem("posts");
+    location.reload();
 }
 
 async function initDataFromFiles() {
