@@ -32,32 +32,32 @@ img {
 
 .container {
     width: 100%;
-    max-width: 1320px;
+    max-width: 1440px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 24px;
 }
 
 /* =========================================
-   2. HEADER VÀ THANH ĐIỀU HƯỚNG
+   2. HEADER VÀ MENU CHÍNH
 ========================================= */
 header {
     position: sticky;
     top: 0;
     z-index: 10000;
     width: 100%;
-    color: #fff;
     background: #008837;
+    color: #fff;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .nav-wrapper {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
     flex-wrap: wrap;
-    gap: 10px;
-    padding-top: 8px;
-    padding-bottom: 8px;
+    gap: 12px 24px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    overflow: visible;
 }
 
 .logo {
@@ -65,43 +65,44 @@ header {
     color: #fff;
     font-size: 24px;
     font-weight: 800;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
     cursor: pointer;
 }
 
-/* Menu chính */
+/* Các mục menu nằm ngang */
 .nav-menu {
+    position: relative;
+    z-index: 10000;
     display: flex;
+    flex: 1;
     align-items: center;
     justify-content: flex-start;
+    flex-direction: row;
     flex-wrap: wrap;
-    gap: 2px;
-    width: 100%;
+    gap: 3px;
     min-width: 0;
+    width: 100%;
     overflow: visible;
     list-style: none;
 }
 
-.nav-menu::-webkit-scrollbar {
-    display: none;
-}
-
 .nav-menu > li {
     position: relative;
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    list-style: none;
 }
 
 .nav-menu li a {
     display: block;
-    padding: 8px 12px;
+    padding: 8px 11px;
     border-radius: 4px;
     color: #fff;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 650;
     line-height: 1.5;
     white-space: nowrap;
     cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition: background 0.2s ease;
 }
 
 .nav-menu li a:hover,
@@ -121,56 +122,49 @@ header {
 }
 
 /* =========================================
-   2.1 MENU THẢ XUỐNG
+   3. MENU THẢ XUỐNG
 ========================================= */
-
-/* Mục cha: Thế giới, Thời sự */
 .nav-menu > li.has-dropdown {
     position: relative;
+    z-index: 10001;
 }
 
-/* Tạo khoảng đệm trong suốt phía trên menu con,
-   giúp rê chuột từ mục cha xuống menu con không bị mất hover */
 .nav-menu > li.has-dropdown > .dropdown-menu {
     display: none;
     position: absolute;
     top: 100%;
     left: 0;
-    z-index: 10001;
-    min-width: 245px;
+    z-index: 10002;
+    min-width: 240px;
     max-width: 320px;
-    padding: 6px 0;
     margin: 0;
+    padding: 6px 0;
     border: 1px solid #e0e0e0;
     border-radius: 5px;
     background: #fff;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
     list-style: none;
-    text-align: left;
 }
 
-/* Hiện menu con khi rê chuột hoặc dùng bàn phím */
 .nav-menu > li.has-dropdown:hover > .dropdown-menu,
 .nav-menu > li.has-dropdown:focus-within > .dropdown-menu {
     display: block;
 }
 
-/* Từng dòng menu con */
-.nav-menu > li.has-dropdown > .dropdown-menu li {
+.nav-menu .dropdown-menu li {
     display: block;
     width: 100%;
     margin: 0;
     padding: 0;
 }
 
-/* Chữ trong menu con */
-.nav-menu > li.has-dropdown > .dropdown-menu li a {
+.nav-menu .dropdown-menu li a {
     display: block;
     width: 100%;
     padding: 10px 16px;
     border-radius: 0;
-    background: #fff;
-    color: #333;
+    background: #fff !important;
+    color: #222 !important;
     font-size: 14px;
     font-weight: 500;
     line-height: 1.5;
@@ -178,23 +172,22 @@ header {
     overflow-wrap: break-word;
 }
 
-/* Hiệu ứng rê chuột vào mục con */
-.nav-menu > li.has-dropdown > .dropdown-menu li a:hover,
-.nav-menu > li.has-dropdown > .dropdown-menu li a:focus {
-    background: #f0fdf4;
-    color: #008837;
+.nav-menu .dropdown-menu li a:hover,
+.nav-menu .dropdown-menu li a:focus {
+    background: #f0fdf4 !important;
+    color: #008837 !important;
 }
 
-/* Đảm bảo menu con nằm trên nội dung bên dưới */
+/* Không cắt menu thả xuống */
 header,
 .nav-wrapper,
 .nav-menu,
-.nav-menu > li.has-dropdown {
+.nav-menu > li {
     overflow: visible;
 }
 
 /* =========================================
-   3. KHU VỰC NỘI DUNG CHÍNH
+   4. NỘI DUNG CHÍNH
 ========================================= */
 main {
     width: 100%;
@@ -219,6 +212,10 @@ main {
     line-height: 1.3;
 }
 
+.category-block {
+    margin-top: 25px;
+}
+
 .category-section-title {
     display: flex;
     align-items: center;
@@ -240,24 +237,18 @@ main {
     color: #006b2b;
 }
 
-.category-block {
-    margin-top: 25px;
-}
-
-
 /* =========================================
-   4. KHUNG TIN NỔI BẬT
-   Bố cục: 1 bài lớn bên trái + 2 bài nhỏ bên phải
+   5. TIN NỔI BẬT
+   Một bài lớn bên trái, hai bài nhỏ bên phải
 ========================================= */
-
 #appView .featured-grid {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     align-items: start;
-    gap: 25px;
+    gap: 24px;
     width: 100%;
     max-width: 100%;
-    margin: 0 auto 30px;
+    margin: 0 auto 32px;
 }
 
 #appView .featured-grid > .card-clean,
@@ -272,12 +263,12 @@ main {
     cursor: pointer;
 }
 
-/* BÀI LỚN BÊN TRÁI */
+/* Ảnh bài lớn */
 #appView .featured-grid .card-img-large {
     display: block;
     width: 100%;
-    aspect-ratio: 16 / 10;
     height: auto;
+    aspect-ratio: 16 / 10;
     margin-bottom: 8px;
     border-radius: 5px;
     object-fit: cover;
@@ -285,16 +276,17 @@ main {
     background: #f0f0f0;
 }
 
+/* Chuyên mục bài lớn */
 #appView .featured-grid .card-category-green {
-    margin: 0 0 14px;
+    margin: 0 0 12px;
     color: #008837;
     font-size: 14px;
     font-weight: 800;
     line-height: 1.4;
     text-transform: uppercase;
-    letter-spacing: 0.2px;
 }
 
+/* Tiêu đề bài lớn */
 #appView .featured-grid .card-title-large-green {
     margin: 0 0 10px;
     color: #008837;
@@ -317,11 +309,11 @@ main {
     line-height: 1.4;
 }
 
-/* NHÓM BÀI NHỎ BÊN PHẢI */
+/* Hai bài nhỏ bên phải */
 #appView .featured-grid .featured-small-group {
     display: flex;
     flex-direction: column;
-    gap: 26px;
+    gap: 24px;
     width: 100%;
     min-width: 0;
 }
@@ -329,8 +321,8 @@ main {
 #appView .featured-grid .card-img-small {
     display: block;
     width: 100%;
-    aspect-ratio: 16 / 9;
     height: auto;
+    aspect-ratio: 16 / 9;
     margin-bottom: 8px;
     border-radius: 5px;
     object-fit: cover;
@@ -341,7 +333,7 @@ main {
 #appView .featured-grid .card-title-small-clean {
     margin: 0 0 5px;
     color: #111;
-    font-size: 21px;
+    font-size: 20px;
     font-weight: 750;
     line-height: 1.35;
     overflow-wrap: break-word;
@@ -351,74 +343,12 @@ main {
     color: #006b2b;
 }
 
-#appView .featured-grid .featured-small-group
-.card-clean:hover .card-title-small-clean {
+#appView .featured-grid .featured-small-group .card-clean:hover .card-title-small-clean {
     color: #008837;
 }
 
-/* TABLET */
-@media (max-width: 1100px) {
-    #appView .featured-grid {
-        grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
-        gap: 20px;
-    }
-
-    #appView .featured-grid .card-title-large-green {
-        font-size: 27px;
-    }
-
-    #appView .featured-grid .card-title-small-clean {
-        font-size: 18px;
-    }
-
-    #appView .featured-grid .featured-small-group {
-        gap: 20px;
-    }
-}
-
-/* ĐIỆN THOẠI */
-@media (max-width: 700px) {
-    #appView .featured-grid {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 24px;
-    }
-
-    #appView .featured-grid .card-img-large {
-        aspect-ratio: 16 / 10;
-    }
-
-    #appView .featured-grid .card-title-large-green {
-        font-size: 24px;
-        line-height: 1.35;
-    }
-
-    #appView .featured-grid .featured-small-group {
-        gap: 24px;
-    }
-
-    #appView .featured-grid .card-img-small {
-        aspect-ratio: 16 / 9;
-    }
-
-    #appView .featured-grid .card-title-small-clean {
-        font-size: 19px;
-    }
-}
-
-/* ĐIỆN THOẠI NHỎ */
-@media (max-width: 380px) {
-    #appView .featured-grid .card-title-large-green {
-        font-size: 21px;
-    }
-
-    #appView .featured-grid .card-title-small-clean {
-        font-size: 17px;
-    }
-}
-
-
 /* =========================================
-   5. DANH SÁCH TIN PHÍA DƯỚI
+   6. DANH SÁCH BÀI VIẾT
 ========================================= */
 .recent-list {
     display: flex;
@@ -438,7 +368,7 @@ main {
 
 .list-item-img {
     display: block;
-    flex-shrink: 0;
+    flex: 0 0 200px;
     width: 200px;
     height: 125px;
     border-radius: 6px;
@@ -476,7 +406,7 @@ main {
 }
 
 /* =========================================
-   6. TRANG CHI TIẾT BÀI VIẾT
+   7. CHI TIẾT BÀI VIẾT
 ========================================= */
 .article-detail {
     width: 100%;
@@ -541,7 +471,7 @@ main {
 }
 
 /* =========================================
-   7. GIAO DIỆN CRAWLER
+   8. CRAWLER
 ========================================= */
 .crawler-box {
     padding: 10px 0;
@@ -657,7 +587,7 @@ main {
 }
 
 /* =========================================
-   8. LOCALSTORAGE
+   9. LOCAL STORAGE
 ========================================= */
 .local-storage-section {
     margin-top: 35px;
@@ -726,152 +656,194 @@ main {
 }
 
 /* =========================================
-   9. FOOTER
+   10. FOOTER
 ========================================= */
 footer {
+    width: 100%;
     margin-top: 40px;
-    padding: 35px 0 20px;
+    padding: 36px 0 0;
     background: #1b1e21;
-    color: #aaa;
+    color: #c5cbd1;
+}
+
+footer .container {
+    width: min(1200px, 92%);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0;
 }
 
 .footer-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1.5fr;
-    gap: 25px;
-    margin-bottom: 30px;
+    grid-template-columns: 2fr 1fr 1fr 1.3fr;
+    align-items: start;
+    gap: 30px;
+    padding-bottom: 32px;
+}
+
+.footer-col {
+    min-width: 0;
 }
 
 .footer-col h3,
 .footer-col h4 {
-    margin-bottom: 15px;
+    margin: 0 0 18px;
     color: #fff;
+    font-size: 18px;
+    font-weight: 700;
 }
 
 .footer-col p {
+    margin: 0 0 10px;
     font-size: 14px;
-    line-height: 1.7;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
 }
 
 .footer-links {
+    padding: 0;
+    margin: 0;
     list-style: none;
 }
 
 .footer-links li {
-    margin-bottom: 8px;
+    margin: 0 0 10px;
 }
 
 .footer-links a {
+    color: #c5cbd1;
+    line-height: 1.6;
     cursor: pointer;
+    transition: color 0.2s ease;
 }
 
 .footer-links a:hover {
     color: #fff;
-    text-decoration: underline;
 }
 
-```css
+/* Chuyên mục footer nằm ngang, tự xuống dòng khi hết chỗ */
+footer #footerCategories {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+footer #footerCategories li {
+    display: inline-flex;
+    margin: 0;
+    padding: 0;
+}
+
+footer #footerCategories li a {
+    display: inline-block;
+    padding: 3px 0;
+    white-space: nowrap;
+}
+
+/* Icon mạng xã hội */
 .social-icons {
     display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
-    margin-top: 15px;
+    gap: 10px;
+    margin-top: 14px;
 }
 
+.social-icons a,
 .social-icon-btn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: #3c3c3c;
+    background: #383b3e;
     color: #fff;
-    font-size: 20px;
+    font-size: 19px;
     text-decoration: none;
     transition: background 0.2s ease, transform 0.2s ease;
 }
 
+.social-icons a:hover,
 .social-icon-btn:hover {
     background: #008837;
     color: #fff;
-    transform: translateY(-3px);
+    transform: translateY(-2px);
 }
 
 .social-icon-btn i {
     line-height: 1;
 }
-```
 
 .footer-bottom {
-    padding-top: 20px;
-    border-top: 1px solid #333;
-    color: #888;
+    width: 100%;
+    padding: 16px 10px;
+    border-top: 1px solid #383b3e;
+    color: #999;
     font-size: 13px;
+    line-height: 1.6;
     text-align: center;
 }
 
+.footer-bottom p {
+    margin: 0;
+}
+
 /* =========================================
-   10. RESPONSIVE - TABLET
+   11. RESPONSIVE - TABLET
 ========================================= */
 @media (max-width: 1100px) {
     .container {
-        padding-left: 22px;
-        padding-right: 22px;
+        padding-right: 20px;
+        padding-left: 20px;
     }
 
     .nav-wrapper {
-        align-items: flex-start;
+        gap: 8px 16px;
     }
 
     .logo {
         font-size: 22px;
     }
 
-    .nav-menu {
-        flex-wrap: wrap;
-        width: 100%;
-        overflow: visible;
-    }
-
     .nav-menu li a {
-        padding: 7px 9px;
+        padding: 7px 8px;
         font-size: 13px;
     }
 
     #appView .featured-grid {
-        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-        gap: 18px;
-    }
-
-    #appView .featured-grid .card-img-large {
-        height: 350px;
-    }
-
-    #appView .featured-grid .card-img-small {
-        height: 180px;
+        grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+        gap: 20px;
     }
 
     #appView .featured-grid .card-title-large-green {
-        font-size: 22px;
+        font-size: 27px;
     }
 
     #appView .featured-grid .card-title-small-clean {
-        font-size: 16px;
+        font-size: 18px;
     }
 
     .footer-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 28px;
     }
 }
 
 /* =========================================
-   11. RESPONSIVE - ĐIỆN THOẠI
+   12. RESPONSIVE - ĐIỆN THOẠI
 ========================================= */
 @media (max-width: 700px) {
     .container {
-        padding-left: 16px;
         padding-right: 16px;
+        padding-left: 16px;
     }
 
     .nav-wrapper {
@@ -884,26 +856,37 @@ footer {
         font-size: 22px;
     }
 
+    /* Menu vẫn xếp ngang, vuốt sang trái/phải nếu thiếu chỗ */
     .nav-menu {
         display: flex;
+        flex-wrap: nowrap;
         width: 100%;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        gap: 2px;
-        overflow: visible;
+        gap: 3px;
+        overflow-x: auto;
+        overflow-y: visible;
+        padding-bottom: 4px;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-menu > li {
+        flex-shrink: 0;
     }
 
     .nav-menu li a {
-        padding: 6px 8px;
-        font-size: 12px;
+        padding: 7px 9px;
+        font-size: 13px;
     }
 
+    /* Dropdown trên điện thoại vẫn mở khi nhấn/được focus;
+       nếu JavaScript đang điều khiển dropdown, không cản trở */
     .nav-menu > li.has-dropdown > .dropdown-menu {
         min-width: 210px;
+        max-width: min(280px, 90vw);
     }
 
     main {
-        padding-top: 18px;
+        padding-top: 16px;
     }
 
     .section-title {
@@ -911,30 +894,31 @@ footer {
         font-size: 22px;
     }
 
+    /* Bài nổi bật: xếp dọc trên điện thoại */
     #appView .featured-grid {
         grid-template-columns: minmax(0, 1fr);
-        gap: 25px;
+        gap: 24px;
     }
 
     #appView .featured-grid .card-img-large {
-        height: 260px;
+        aspect-ratio: 16 / 10;
     }
 
-    #appView .featured-grid .card-img-small {
-        height: 210px;
+    #appView .featured-grid .card-title-large-green {
+        font-size: 24px;
+        line-height: 1.35;
     }
 
     #appView .featured-grid .featured-small-group {
         gap: 24px;
     }
 
-    #appView .featured-grid .card-title-large-green {
-        font-size: 22px;
-        line-height: 1.35;
+    #appView .featured-grid .card-img-small {
+        aspect-ratio: 16 / 9;
     }
 
     #appView .featured-grid .card-title-small-clean {
-        font-size: 18px;
+        font-size: 19px;
     }
 
     .category-section-title {
@@ -947,6 +931,7 @@ footer {
     }
 
     .list-item-img {
+        flex: 0 0 125px;
         width: 125px;
         height: 95px;
     }
@@ -985,8 +970,22 @@ footer {
     }
 
     .footer-grid {
-        grid-template-columns: 1fr;
-        gap: 25px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px 18px;
+    }
+
+    .footer-col h4 {
+        font-size: 16px;
+        margin-bottom: 14px;
+    }
+
+    .footer-col p,
+    .footer-links a {
+        font-size: 14px;
+    }
+
+    footer #footerCategories {
+        gap: 6px 12px;
     }
 
     .ls-item {
@@ -1000,12 +999,12 @@ footer {
 }
 
 /* =========================================
-   12. ĐIỆN THOẠI NHỎ
+   13. ĐIỆN THOẠI NHỎ
 ========================================= */
 @media (max-width: 380px) {
     .container {
-        padding-left: 12px;
         padding-right: 12px;
+        padding-left: 12px;
     }
 
     .logo {
@@ -1013,16 +1012,8 @@ footer {
     }
 
     .nav-menu li a {
-        padding: 5px 6px;
-        font-size: 11.5px;
-    }
-
-    #appView .featured-grid .card-img-large {
-        height: 220px;
-    }
-
-    #appView .featured-grid .card-img-small {
-        height: 180px;
+        padding: 6px 8px;
+        font-size: 12px;
     }
 
     #appView .featured-grid .card-title-large-green {
@@ -1034,6 +1025,7 @@ footer {
     }
 
     .list-item-img {
+        flex-basis: 105px;
         width: 105px;
         height: 85px;
     }
@@ -1045,377 +1037,8 @@ footer {
     .article-title-main {
         font-size: 24px;
     }
-}
 
-/* SỬA DROPDOWN CHO THẾ GIỚI VÀ THỜI SỰ */
-header,
-.nav-wrapper,
-.nav-menu,
-.nav-menu > li {
-    overflow: visible !important;
-}
-
-.nav-menu {
-    position: relative;
-    z-index: 10000;
-}
-
-.nav-menu > li.has-dropdown {
-    position: relative;
-    z-index: 10001;
-}
-
-.nav-menu > li.has-dropdown > .dropdown-menu {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    min-width: 240px;
-    margin: 0;
-    padding: 6px 0;
-    list-style: none;
-    background: #fff !important;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
-    z-index: 10002;
-}
-
-.nav-menu > li.has-dropdown:hover > .dropdown-menu,
-.nav-menu > li.has-dropdown:focus-within > .dropdown-menu {
-    display: block !important;
-}
-
-.nav-menu .dropdown-menu li {
-    display: block;
-    width: 100%;
-}
-
-.nav-menu .dropdown-menu li a {
-    display: block;
-    width: 100%;
-    padding: 10px 16px;
-    color: #222 !important;
-    background: #fff !important;
-    font-size: 14px;
-    white-space: normal;
-}
-
-.nav-menu .dropdown-menu li a:hover,
-.nav-menu .dropdown-menu li a:focus {
-    color: #008837 !important;
-    background: #f0fdf4 !important;
-}
-
-/* Không để menu con bị cắt ở màn hình nhỏ */
-@media (max-width: 700px) {
-    .nav-menu > li.has-dropdown > .dropdown-menu {
-        min-width: 210px;
-    }
-}
-
-/* ===== SỬA BỐ CỤC FOOTER CHO CÂN ĐỐI ===== */
-
-footer {
-    width: 100%;
-    box-sizing: border-box;
-    background: #1b1e21;
-    color: #c5cbd1;
-    padding: 36px 0 0;
-    margin: 0;
-}
-
-footer .container {
-    width: min(1200px, 92%);
-    margin: 0 auto;
-    box-sizing: border-box;
-}
-
-.footer-grid {
-    display: grid;
-    grid-template-columns: 2fr 0.9fr 0.9fr 1.2fr;
-    gap: 36px;
-    align-items: start;
-    padding-bottom: 32px;
-}
-
-.footer-col {
-    min-width: 0;
-}
-
-.footer-col h4 {
-    color: #fff;
-    font-size: 18px;
-    font-weight: 700;
-    margin: 0 0 22px;
-}
-
-.footer-col p {
-    font-size: 15px;
-    line-height: 1.8;
-    margin: 0 0 10px;
-    overflow-wrap: anywhere;
-}
-
-.footer-links {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.footer-links li {
-    margin: 0 0 12px;
-}
-
-.footer-links a {
-    color: #c5cbd1;
-    text-decoration: none;
-    line-height: 1.6;
-    transition: color 0.2s ease;
-}
-
-.footer-links a:hover {
-    color: #fff;
-}
-
-/* Các icon mạng xã hội nằm ngang */
-.social-icons {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-    margin-top: 12px;
-}
-
-.social-icons a,
-.social-icon-btn {
-    width: 46px;
-    height: 46px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    border-radius: 50%;
-    background: #383b3e;
-    color: #fff;
-    text-decoration: none;
-    font-size: 20px;
-    transition: background 0.2s ease;
-}
-
-.social-icons a:hover,
-.social-icon-btn:hover {
-    background: #008837;
-}
-
-/* Phần bản quyền */
-.footer-bottom {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 16px 0;
-    border-top: 1px solid #383b3e;
-    text-align: center;
-    font-size: 14px;
-    line-height: 1.6;
-}
-
-.footer-bottom p {
-    margin: 0;
-}
-
-/* Màn hình vừa */
-@media (max-width: 900px) {
-    .footer-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 30px;
-    }
-}
-
-/* Điện thoại */
-@media (max-width: 550px) {
-    footer {
-        padding-top: 28px;
-    }
-
-    .footer-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 24px 18px;
-        padding-bottom: 24px;
-    }
-
-    .footer-col h4 {
-        font-size: 16px;
-        margin-bottom: 14px;
-    }
-
-    .footer-col p,
-    .footer-links a {
-        font-size: 14px;
-    }
-
-    .social-icons {
-        gap: 8px;
-    }
-
-    .social-icons a,
-    .social-icon-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
-    }
-
-    .footer-bottom {
-        font-size: 12px;
-        padding: 14px 10px;
-    }
-}
-
-@media (max-width: 360px) {
     .footer-grid {
         grid-template-columns: 1fr;
-    }
-}
-
-
-/* ===== CÂN ĐỐI KÍCH THƯỚC KHUNG TIN MỚI NHẤT ===== */
-
-/* Giới hạn chiều rộng vùng tin nổi bật */
-#appView .featured-grid {
-    width: 100%;
-    max-width: 1100px;
-    margin: 0 auto 30px;
-    display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-    align-items: start;
-    gap: 24px;
-}
-
-/* Khung bài viết không bị tràn */
-#appView .featured-grid > .card-clean,
-#appView .featured-grid > .featured-small-group {
-    min-width: 0;
-    width: 100%;
-}
-
-/* Ảnh bài viết lớn bên trái */
-#appView .featured-grid .card-img-large {
-    width: 100%;
-    height: 340px;
-    aspect-ratio: auto;
-    object-fit: cover;
-    display: block;
-    border-radius: 6px;
-    margin-bottom: 10px;
-}
-
-/* Nhóm bài viết bên phải */
-#appView .featured-grid .featured-small-group {
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-}
-
-/* Ảnh bài viết nhỏ bên phải */
-#appView .featured-grid .card-img-small {
-    width: 100%;
-    height: 190px;
-    aspect-ratio: auto;
-    object-fit: cover;
-    display: block;
-    border-radius: 6px;
-    margin-bottom: 8px;
-}
-
-/* Cỡ chữ cân đối */
-#appView .featured-grid .card-title-large-green {
-    font-size: 25px;
-    line-height: 1.4;
-}
-
-#appView .featured-grid .card-title-small-clean {
-    font-size: 18px;
-    line-height: 1.4;
-}
-
-/* Tablet */
-@media (max-width: 900px) {
-    #appView .featured-grid {
-        max-width: 100%;
-        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-        gap: 18px;
-    }
-
-    #appView .featured-grid .card-img-large {
-        height: 280px;
-    }
-
-    #appView .featured-grid .card-img-small {
-        height: 155px;
-    }
-
-    #appView .featured-grid .card-title-large-green {
-        font-size: 22px;
-    }
-
-    #appView .featured-grid .card-title-small-clean {
-        font-size: 16px;
-    }
-}
-
-/* Điện thoại */
-@media (max-width: 600px) {
-    #appView .featured-grid {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 22px;
-    }
-
-    #appView .featured-grid .card-img-large {
-        height: auto;
-        aspect-ratio: 16 / 10;
-    }
-
-    #appView .featured-grid .card-img-small {
-        height: auto;
-        aspect-ratio: 16 / 9;
-    }
-
-    #appView .featured-grid .card-title-large-green {
-        font-size: 21px;
-    }
-
-    #appView .featured-grid .card-title-small-clean {
-        font-size: 17px;
-    }
-}
-
-/* CHO DANH SÁCH CHUYÊN MỤC FOOTER NẰM NGANG */
-footer #footerCategories {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 20px;
-    padding: 0;
-    margin: 0;
-    list-style: none;
-}
-
-footer #footerCategories li {
-    display: inline-flex;
-    margin: 0;
-    padding: 0;
-}
-
-footer #footerCategories li a {
-    display: inline-block;
-    padding: 5px 0;
-    white-space: nowrap;
-}
-
-/* Trên điện thoại vẫn tự xuống dòng khi hết chỗ */
-@media (max-width: 600px) {
-    footer #footerCategories {
-        gap: 6px 14px;
     }
 }
