@@ -380,6 +380,7 @@ async function initDataFromFiles() {
    4. THANH ĐIỀU HƯỚNG
 ========================================= */
 
+
 function renderNavbar() {
     const categories = getCategories();
     const navMenuEl = document.getElementById("navbarMenu");
@@ -395,16 +396,29 @@ function renderNavbar() {
         const title = escapeHtml(cat.title || cat.id);
         const navId = escapeHtml(normalizeCategoryId(cat.id));
 
-        if (Array.isArray(cat.children) && cat.children.length > 0) {
-            let subHtml = '<ul class="dropdown-menu">';
+        const children = Array.isArray(cat.children)
+            ? cat.children.filter(child => child && child.id)
+            : [];
 
-            cat.children.forEach(child => {
-                if (!child || !child.id) return;
+        if (children.length > 0) {
+            const dropdownClass =
+                normalizeCategoryId(cat.title || cat.id) === "the-gioi"
+                    ? "dropdown-world"
+                    : normalizeCategoryId(cat.title || cat.id) === "thoi-su"
+                        ? "dropdown-current"
+                        : "";
+
+            let subHtml = `
+                <ul class="dropdown-menu ${dropdownClass}">
+            `;
+
+            children.forEach(child => {
+                const childArg = makeClickArg(child.id);
 
                 subHtml += `
                     <li>
                         <a href="#"
-                           onclick="event.preventDefault();renderCategory(decodeURIComponent('${makeClickArg(child.id)}'))">
+                           onclick="event.preventDefault(); renderCategory(decodeURIComponent('${childArg}'))">
                             ${escapeHtml(child.title || child.id)}
                         </a>
                     </li>
@@ -416,9 +430,10 @@ function renderNavbar() {
             navHtml += `
                 <li class="has-dropdown">
                     <a href="#"
-                       onclick="event.preventDefault();renderCategory(decodeURIComponent('${idArg}'))"
-                       id="nav-${navId}">
-                        ${title} ▾
+                       onclick="event.preventDefault(); renderCategory(decodeURIComponent('${idArg}'))"
+                       id="nav-${navId}"
+                       aria-haspopup="true">
+                        ${title} <span aria-hidden="true">▾</span>
                     </a>
                     ${subHtml}
                 </li>
@@ -427,7 +442,7 @@ function renderNavbar() {
             navHtml += `
                 <li>
                     <a href="#"
-                       onclick="event.preventDefault();renderCategory(decodeURIComponent('${idArg}'))"
+                       onclick="event.preventDefault(); renderCategory(decodeURIComponent('${idArg}'))"
                        id="nav-${navId}">
                         ${title}
                     </a>
@@ -438,7 +453,7 @@ function renderNavbar() {
         footerHtml += `
             <li>
                 <a href="#"
-                   onclick="event.preventDefault();renderCategory(decodeURIComponent('${idArg}'))">
+                   onclick="event.preventDefault(); renderCategory(decodeURIComponent('${idArg}'))">
                     ${title}
                 </a>
             </li>
@@ -448,7 +463,7 @@ function renderNavbar() {
     navHtml += `
         <li>
             <a href="#"
-               onclick="event.preventDefault();renderCrawlerPage()"
+               onclick="event.preventDefault(); renderCrawlerPage()"
                class="btn-crawler">
                 Crawler Page
             </a>
@@ -458,6 +473,7 @@ function renderNavbar() {
     if (navMenuEl) navMenuEl.innerHTML = navHtml;
     if (footerCatEl) footerCatEl.innerHTML = footerHtml;
 }
+
 
 function setActiveNavigation(catId) {
     document.querySelectorAll(".nav-menu a").forEach(link => {
