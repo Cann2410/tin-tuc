@@ -929,16 +929,16 @@ footer {
     }
 }
 
-/* FIX KHUNG TIN NOI BAT - DAN CUOI FILE style.css */
+/* ===== BO CUC TIN NOI BAT THEO ANH MAU ===== */
 
 #appView .featured-grid {
     display: grid !important;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 0.9fr) !important;
+    grid-template-columns: 2fr 1fr !important;
+    align-items: start !important;
     gap: 24px !important;
     width: 100% !important;
-    max-width: 1200px !important;
+    max-width: 1250px !important;
     margin: 0 auto 30px !important;
-    align-items: start !important;
 }
 
 #appView .featured-grid > .card-clean,
@@ -947,47 +947,64 @@ footer {
     min-width: 0 !important;
 }
 
+/* Anh bai lon ben trai */
 #appView .featured-grid .card-img-large {
+    display: block !important;
     width: 100% !important;
-    height: 320px !important;
-    aspect-ratio: auto !important;
+    height:  auto !important;
+    aspect-ratio: 16 / 9 !important;
     object-fit: cover !important;
+    border-radius: 5px !important;
+    margin-bottom: 7px !important;
 }
 
-#appView .featured-grid .card-img-small {
-    width: 100% !important;
-    height: 165px !important;
-    aspect-ratio: auto !important;
-    object-fit: cover !important;
-}
-
+/* Cot hai bai nho ben phai */
 #appView .featured-grid .featured-small-group {
     display: flex !important;
     flex-direction: column !important;
-    gap: 20px !important;
+    gap: 22px !important;
 }
 
+/* Anh bai nho */
+#appView .featured-grid .card-img-small {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 16 / 9 !important;
+    object-fit: cover !important;
+    border-radius: 5px !important;
+    margin-bottom: 7px !important;
+}
+
+/* Tieu de bai lon */
 #appView .featured-grid .card-title-large-green {
-    font-size: 25px !important;
+    font-size: 27px !important;
     line-height: 1.35 !important;
+    margin-bottom: 9px !important;
 }
 
+/* Tieu de bai nho */
 #appView .featured-grid .card-title-small-clean {
     font-size: 18px !important;
     line-height: 1.4 !important;
+    margin-bottom: 5px !important;
 }
 
-/* Dien thoai moi xep mot cot */
+/* Dien thoai: chuyen thanh mot cot */
 @media (max-width: 700px) {
     #appView .featured-grid {
         grid-template-columns: minmax(0, 1fr) !important;
+        gap: 24px !important;
     }
 
-    #appView .featured-grid .card-img-large {
-        height: 240px !important;
-    }
-
+    #appView .featured-grid .card-img-large,
     #appView .featured-grid .card-img-small {
-        height: 190px !important;
+        aspect-ratio: 16 / 9 !important;
+        height: auto !important;
+    }
+
+    #appView .featured-grid .card-title-large-green {
+        font-size: 23px !important;
     }
 }
+
