@@ -10,10 +10,10 @@ const DEFAULT_MENU = [
         title: "Thế giới",
         type: "category",
         children: [
-            { id: "quan-su", title: "Quân sự", type: "category" },
-            { id: "phan-tich", title: "Phân tích - Bình luận", type: "category" },
-            { id: "the-gioi-do-day", title: "Thế giới đó đây", type: "category" },
-            { id: "kieu-bao", title: "Kiều bào", type: "category" }
+            { id: "the-gioi", title: "Quân sự", type: "category" },
+            { id: "the-gioi", title: "Phân tích - Bình luận", type: "category" },
+            { id: "the-gioi", title: "Thế giới đó đây", type: "category" },
+            { id: "the-gioi", title: "Kiều bào", type: "category" }
         ]
     },
     {
@@ -21,10 +21,10 @@ const DEFAULT_MENU = [
         title: "Thời sự",
         type: "category",
         children: [
-            { id: "chinh-tri", title: "Chính trị", type: "category" },
-            { id: "giao-thong", title: "Giao thông", type: "category" },
-            { id: "moi-truong", title: "Môi trường", type: "category" },
-            { id: "nong-tren-mang", title: "Nóng trên mạng", type: "category" }
+            { id: "thoi-su", title: "Chính trị", type: "category" },
+            { id: "thoi-su", title: "Giao thông", type: "category" },
+            { id: "thoi-su", title: "Môi trường", type: "category" },
+            { id: "thoi-su", title: "Nóng trên mạng", type: "category" }
         ]
     },
     { id: "phap-luat", title: "Pháp luật", type: "category" },
