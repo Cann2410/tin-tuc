@@ -12,16 +12,32 @@
       "url": "https://dantri.com.vn/tin-moi-nhat.htm",
       "type": "category"
     },
-      {
+    {
       "id": "Thế giới",
       "title": "Thế giới",
       "url": "https://dantri.com.vn/the-gioi.htm",
       "type": "category",
       "children": [
-        { "id": "Quân sự", "title": "Quân sự", "url": "https://dantri.com.vn/the-gioi/quan-su.htm" },
-        { "id": "Phân tích - Bình luận", "title": "Phân tích - Bình luận", "url": "https://dantri.com.vn/the-gioi/phan-tich-binh-luan.htm" },
-        { "id": "Thế giới đó đây", "title": "Thế giới đó đây", "url": "https://dantri.com.vn/the-gioi/the-gioi-do-day.htm" },
-        { "id": "Kiều bào", "title": "Kiều bào", "url": "https://dantri.com.vn/the-gioi/kieu-bao.htm" }
+        {
+          "id": "Quân sự",
+          "title": "Quân sự",
+          "url": "https://dantri.com.vn/the-gioi/quan-su.htm"
+        },
+        {
+          "id": "Phân tích - Bình luận",
+          "title": "Phân tích - Bình luận",
+          "url": "https://dantri.com.vn/the-gioi/phan-tich-binh-luan.htm"
+        },
+        {
+          "id": "Thế giới đó đây",
+          "title": "Thế giới đó đây",
+          "url": "https://dantri.com.vn/the-gioi/the-gioi-do-day.htm"
+        },
+        {
+          "id": "Kiều bào",
+          "title": "Kiều bào",
+          "url": "https://dantri.com.vn/the-gioi/kieu-bao.htm"
+        }
       ]
     },
     {
@@ -30,10 +46,26 @@
       "url": "https://dantri.com.vn/thoi-su.htm",
       "type": "category",
       "children": [
-        { "id": "Chính trị", "title": "Chính trị", "url": "https://dantri.com.vn/thoi-su/chinh-tri.htm" },
-        { "id": "Giao thông", "title": "Giao thông", "url": "https://dantri.com.vn/thoi-su/giao-thong.htm" },
-        { "id": "Môi trường", "title": "Môi trường", "url": "https://dantri.com.vn/thoi-su/moi-truong.htm" },
-        { "id": "Nóng trên mạng", "title": "Nóng trên mạng", "url": "https://dantri.com.vn/thoi-su/nong-tren-mang.htm" }
+        {
+          "id": "Chính trị",
+          "title": "Chính trị",
+          "url": "https://dantri.com.vn/thoi-su/chinh-tri.htm"
+        },
+        {
+          "id": "Giao thông",
+          "title": "Giao thông",
+          "url": "https://dantri.com.vn/thoi-su/giao-thong.htm"
+        },
+        {
+          "id": "Môi trường",
+          "title": "Môi trường",
+          "url": "https://dantri.com.vn/thoi-su/moi-truong.htm"
+        },
+        {
+          "id": "Nóng trên mạng",
+          "title": "Nóng trên mạng",
+          "url": "https://dantri.com.vn/thoi-su/nong-tren-mang.htm"
+        }
       ]
     },
     {
