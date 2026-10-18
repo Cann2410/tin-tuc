@@ -1,22 +1,43 @@
-
 /* =========================================
-   1. DỮ LIỆU MẪU MẶC ĐỊNH
+   1. DỮ LIỆU MẪU MẶC ĐỊNH (ĐÃ ĐỒNG BỘ DỰ PHÒNG CHUẨN)
 ========================================= */
 
 const DEFAULT_MENU = [
-    { id: "home", title: "Trang chủ", type: "home" },
-    { id: "moi-nhat", title: "Mới nhất", type: "category" },
-    { id: "the-gioi", title: "Thế giới", type: "category" },
-    { id: "thoi-su", title: "Thời sự", type: "category" },
-    { id: "phap-luat", title: "Pháp luật", type: "category" },
-    { id: "suc-khoe", title: "Sức khỏe", type: "category" },
-    { id: "doi-song", title: "Đời sống", type: "category" },
-    { id: "du-lich", title: "Du lịch", type: "category" },
-    { id: "kinh-doanh", title: "Kinh doanh", type: "category" },
-    { id: "the-thao", title: "Thể thao", type: "category" },
-    { id: "bat-dong-san", title: "Bất động sản", type: "category" },
-    { id: "giai-tri", title: "Giải trí", type: "category" },
-    { id: "giao-duc", title: "Giáo dục", type: "category" }
+    { id: "home", title: "Home", url: "https://dantri.com.vn/", type: "home" },
+    { id: "Mới nhất", title: "Mới nhất", url: "https://dantri.com.vn/tin-moi-nhat.htm", type: "category" },
+    {
+        id: "Thế giới",
+        title: "Thế giới",
+        url: "https://dantri.com.vn/the-gioi.htm",
+        type: "category",
+        children: [
+            { id: "Quân sự", title: "Quân sự", url: "https://dantri.com.vn/the-gioi/quan-su.htm" },
+            { id: "Phân tích - Bình luận", title: "Phân tích - Bình luận", url: "https://dantri.com.vn/the-gioi/phan-tich-binh-luan.htm" },
+            { id: "Thế giới đó đây", title: "Thế giới đó đây", url: "https://dantri.com.vn/the-gioi/the-gioi-do-day.htm" },
+            { id: "Kiều bào", title: "Kiều bào", url: "https://dantri.com.vn/the-gioi/kieu-bao.htm" }
+        ]
+    },
+    {
+        id: "Thời sự",
+        title: "Thời sự",
+        url: "https://dantri.com.vn/thoi-su.htm",
+        type: "category",
+        children: [
+            { id: "Chính trị", title: "Chính trị", url: "https://dantri.com.vn/thoi-su/chinh-tri.htm" },
+            { id: "Giao thông", title: "Giao thông", url: "https://dantri.com.vn/thoi-su/giao-thong.htm" },
+            { id: "Môi trường", title: "Môi trường", url: "https://dantri.com.vn/thoi-su/moi-truong.htm" },
+            { id: "Nóng trên mạng", title: "Nóng trên mạng", url: "https://dantri.com.vn/thoi-su/nong-tren-mang.htm" }
+        ]
+    },
+    { id: "Pháp luật", title: "Pháp luật", url: "https://dantri.com.vn/phap-luat.htm", type: "category" },
+    { id: "Sức khỏe", title: "Sức khỏe", url: "https://dantri.com.vn/suc-khoe.htm", type: "category" },
+    { id: "Đời sống", title: "Đời sống", url: "https://dantri.com.vn/doi-song.htm", type: "category" },
+    { id: "Du lịch", title: "Du lịch", url: "https://dantri.com.vn/du-lich.htm", type: "category" },
+    { id: "Kinh doanh", title: "Kinh doanh", url: "https://dantri.com.vn/kinh-doanh.htm", type: "category" },
+    { id: "Thể thao", title: "Thể thao", url: "https://dantri.com.vn/the-thao.htm", type: "category" },
+    { id: "Bất động sản", title: "Bất động sản", url: "https://dantri.com.vn/bat-dong-san.htm", type: "category" },
+    { id: "Giải trí", title: "Giải trí", url: "https://dantri.com.vn/giai-tri.htm", type: "category" },
+    { id: "Giáo dục", title: "Giáo dục", url: "https://dantri.com.vn/giao-duc.htm", type: "category" }
 ];
 
 const DEFAULT_POSTS = [
