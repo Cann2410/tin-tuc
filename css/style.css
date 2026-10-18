@@ -1,17 +1,13 @@
-
 /* =========================================
    1. THIẾT LẬP CHUNG
 ========================================= */
-
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-html {
-    scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -20,14 +16,8 @@ body {
     background: #fff;
 }
 
-a {
-    text-decoration: none;
-    color: inherit;
-}
-
-img {
-    max-width: 100%;
-}
+a { text-decoration: none; color: inherit; }
+img { max-width: 100%; }
 
 .container {
     width: 100%;
@@ -39,7 +29,6 @@ img {
 /* =========================================
    2. HEADER VÀ THANH ĐIỀU HƯỚNG
 ========================================= */
-
 header {
     position: sticky;
     top: 0;
@@ -75,9 +64,7 @@ header {
     list-style: none;
 }
 
-.nav-menu li {
-    position: relative;
-}
+.nav-menu li { position: relative; }
 
 .nav-menu li a {
     display: block;
@@ -91,9 +78,7 @@ header {
 }
 
 .nav-menu li a:hover,
-.nav-menu li a.active {
-    background: rgba(255, 255, 255, 0.2);
-}
+.nav-menu li a.active { background: rgba(255, 255, 255, 0.2); }
 
 .nav-menu .btn-crawler {
     background: #ff9800 !important;
@@ -101,16 +86,10 @@ header {
     font-weight: 750;
 }
 
-.nav-menu .btn-crawler:hover {
-    background: #e88900 !important;
-}
-
-/* Menu con */
+.nav-menu .btn-crawler:hover { background: #e88900 !important; }
 
 .has-dropdown:hover .dropdown-menu,
-.has-dropdown:focus-within .dropdown-menu {
-    display: block;
-}
+.has-dropdown:focus-within .dropdown-menu { display: block; }
 
 .dropdown-menu {
     display: none;
@@ -142,16 +121,13 @@ header {
 /* =========================================
    3. KHU VỰC NỘI DUNG CHÍNH
 ========================================= */
-
 main {
     min-height: 75vh;
     padding-top: 20px;
     padding-bottom: 35px;
 }
 
-#appView {
-    min-width: 0;
-}
+#appView { min-width: 0; }
 
 .section-title {
     margin-bottom: 18px;
@@ -175,27 +151,17 @@ main {
     cursor: pointer;
 }
 
-.category-section-title .arrow {
-    font-size: 19px;
-    font-weight: 800;
-}
-
-.category-section-title:hover {
-    color: #006b2b;
-}
-
-.category-block {
-    margin-top: 25px;
-}
+.category-section-title .arrow { font-size: 19px; font-weight: 800; }
+.category-section-title:hover { color: #006b2b; }
+.category-block { margin-top: 25px; }
 
 /* =========================================
    4. KHUNG TIN NỔI BẬT
-   Thu gọn kích thước và cân đối hai cột
+   Một bài lớn bên trái, bài nhỏ bên phải
 ========================================= */
-
 #appView .featured-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
     align-items: start;
     gap: 24px;
     width: 100%;
@@ -205,8 +171,8 @@ main {
 
 #appView .featured-grid > .card-clean,
 #appView .featured-grid > .featured-small-group {
-    min-width: 0;
     width: 100%;
+    min-width: 0;
 }
 
 .card-clean {
@@ -215,23 +181,19 @@ main {
     cursor: pointer;
 }
 
-/* Ảnh bài nổi bật bên trái */
-
 #appView .featured-grid .card-img-large {
     display: block;
     width: 100%;
-    height: 390px;
-    margin-bottom: 7px;
+    height: 360px;
+    margin-bottom: 9px;
     border-radius: 6px;
     object-fit: cover;
     object-position: center;
     background: #f0f0f0;
 }
 
-/* Chuyên mục của bài lớn */
-
 #appView .featured-grid .card-category-green {
-    margin: 0 0 10px;
+    margin: 0 0 8px;
     color: #008837;
     font-size: 14px;
     font-weight: 800;
@@ -239,18 +201,14 @@ main {
     text-transform: uppercase;
 }
 
-/* Tiêu đề bài lớn */
-
 #appView .featured-grid .card-title-large-green {
     margin: 0 0 10px;
     color: #008837;
-    font-size: 27px;
+    font-size: 26px;
     font-weight: 800;
     line-height: 1.35;
     overflow-wrap: anywhere;
 }
-
-/* Mô tả bài lớn */
 
 #appView .featured-grid .card-excerpt-clean {
     margin-bottom: 5px;
@@ -259,15 +217,11 @@ main {
     line-height: 1.6;
 }
 
-/* Ngày đăng */
-
 #appView .featured-grid .card-time-clean {
     color: #888;
     font-size: 13px;
     line-height: 1.5;
 }
-
-/* Cột bài nhỏ bên phải */
 
 #appView .featured-grid .featured-small-group {
     display: flex;
@@ -277,20 +231,16 @@ main {
     width: 100%;
 }
 
-/* Ảnh bài nhỏ bên phải */
-
 #appView .featured-grid .card-img-small {
     display: block;
     width: 100%;
-    height: 190px;
+    height: 175px;
     margin-bottom: 7px;
     border-radius: 6px;
     object-fit: cover;
     object-position: center;
     background: #f0f0f0;
 }
-
-/* Tiêu đề bài nhỏ */
 
 #appView .featured-grid .card-title-small-clean {
     margin: 0 0 5px;
@@ -301,8 +251,6 @@ main {
     overflow-wrap: anywhere;
 }
 
-/* Hiệu ứng khi rê chuột */
-
 #appView .featured-grid .card-clean:hover .card-title-large-green,
 #appView .featured-grid .card-clean:hover .card-title-small-clean {
     color: #006b2b;
@@ -311,7 +259,6 @@ main {
 /* =========================================
    5. DANH SÁCH TIN PHÍA DƯỚI
 ========================================= */
-
 .recent-list {
     display: flex;
     flex-direction: column;
@@ -338,10 +285,7 @@ main {
     background: #f0f0f0;
 }
 
-.list-content {
-    flex: 1;
-    min-width: 0;
-}
+.list-content { flex: 1; min-width: 0; }
 
 .list-item-title {
     margin: 4px 0 7px;
@@ -351,9 +295,7 @@ main {
     line-height: 1.4;
 }
 
-.list-item:hover .list-item-title {
-    color: #008837;
-}
+.list-item:hover .list-item-title { color: #008837; }
 
 .list-item-excerpt {
     margin-bottom: 8px;
@@ -362,15 +304,11 @@ main {
     line-height: 1.55;
 }
 
-.list-item-meta {
-    color: #888;
-    font-size: 13px;
-}
+.list-item-meta { color: #888; font-size: 13px; }
 
 /* =========================================
    6. TRANG CHI TIẾT BÀI VIẾT
 ========================================= */
-
 .article-detail {
     width: 100%;
     max-width: 1000px;
@@ -418,9 +356,7 @@ main {
     overflow-wrap: anywhere;
 }
 
-.article-content-body p {
-    margin-bottom: 18px;
-}
+.article-content-body p { margin-bottom: 18px; }
 
 .article-content-body a,
 .article-source-link a {
@@ -428,19 +364,12 @@ main {
     text-decoration: underline;
 }
 
-.article-source-link {
-    margin-top: 24px;
-    font-weight: 650;
-}
+.article-source-link { margin-top: 24px; font-weight: 650; }
 
 /* =========================================
    7. GIAO DIỆN CRAWLER
 ========================================= */
-
-.crawler-box {
-    padding: 10px 0;
-    background: #fff;
-}
+.crawler-box { padding: 10px 0; background: #fff; }
 
 .crawler-desc {
     margin-bottom: 20px;
@@ -486,20 +415,10 @@ main {
     transition: background 0.2s ease;
 }
 
-.btn-crawl:hover {
-    background: #006b2b;
-}
+.btn-crawl:hover { background: #006b2b; }
+.btn-crawl:disabled { opacity: 0.65; cursor: wait; }
 
-.btn-crawl:disabled {
-    opacity: 0.65;
-    cursor: wait;
-}
-
-.fallback-accordion {
-    margin-bottom: 20px;
-    color: #008837;
-    cursor: pointer;
-}
+.fallback-accordion { margin-bottom: 20px; color: #008837; cursor: pointer; }
 
 .fallback-accordion summary {
     outline: none;
@@ -553,7 +472,6 @@ main {
 /* =========================================
    8. LOCALSTORAGE
 ========================================= */
-
 .local-storage-section {
     margin-top: 35px;
     padding-top: 25px;
@@ -592,9 +510,7 @@ main {
     font-weight: 550;
 }
 
-.ls-item:hover .ls-title {
-    color: #008837;
-}
+.ls-item:hover .ls-title { color: #008837; }
 
 .ls-category {
     flex-shrink: 0;
@@ -615,15 +531,11 @@ main {
     transition: all 0.2s ease;
 }
 
-.btn-reset-data:hover {
-    background: #008837;
-    color: #fff;
-}
+.btn-reset-data:hover { background: #008837; color: #fff; }
 
 /* =========================================
    9. FOOTER
 ========================================= */
-
 footer {
     margin-top: 40px;
     padding: 35px 0 20px;
@@ -639,38 +551,16 @@ footer {
 }
 
 .footer-col h3,
-.footer-col h4 {
-    margin-bottom: 15px;
-    color: #fff;
-}
+.footer-col h4 { margin-bottom: 15px; color: #fff; }
 
-.footer-col p {
-    font-size: 14px;
-    line-height: 1.7;
-}
+.footer-col p { font-size: 14px; line-height: 1.7; }
+.footer-links { list-style: none; }
+.footer-links li { margin-bottom: 8px; }
+.footer-links a { cursor: pointer; }
 
-.footer-links {
-    list-style: none;
-}
+.footer-links a:hover { color: #fff; text-decoration: underline; }
 
-.footer-links li {
-    margin-bottom: 8px;
-}
-
-.footer-links a {
-    cursor: pointer;
-}
-
-.footer-links a:hover {
-    color: #fff;
-    text-decoration: underline;
-}
-
-.social-icons {
-    display: flex;
-    gap: 12px;
-    margin-top: 15px;
-}
+.social-icons { display: flex; gap: 12px; margin-top: 15px; }
 
 .social-icon-btn {
     display: flex;
@@ -684,9 +574,7 @@ footer {
     transition: background 0.2s ease;
 }
 
-.social-icon-btn:hover {
-    background: #008837;
-}
+.social-icon-btn:hover { background: #008837; }
 
 .footer-bottom {
     padding-top: 20px;
@@ -699,61 +587,32 @@ footer {
 /* =========================================
    10. RESPONSIVE - TABLET
 ========================================= */
-
 @media (max-width: 1100px) {
-    .container {
-        padding-right: 22px;
-        padding-left: 22px;
-    }
+    .container { padding-right: 22px; padding-left: 22px; }
 
-    .nav-wrapper {
-        align-items: flex-start;
-    }
+    .nav-wrapper { align-items: flex-start; }
+    .logo { font-size: 22px; }
 
-    .logo {
-        font-size: 22px;
-    }
-
-    .nav-menu li a {
-        padding: 7px 8px;
-        font-size: 13px;
-    }
+    .nav-menu li a { padding: 7px 8px; font-size: 13px; }
 
     #appView .featured-grid {
-        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr);
         gap: 18px;
     }
 
-    #appView .featured-grid .card-img-large {
-        height: 330px;
-    }
+    #appView .featured-grid .card-img-large { height: 320px; }
+    #appView .featured-grid .card-img-small { height: 155px; }
+    #appView .featured-grid .card-title-large-green { font-size: 24px; }
+    #appView .featured-grid .card-title-small-clean { font-size: 16px; }
 
-    #appView .featured-grid .card-img-small {
-        height: 165px;
-    }
-
-    #appView .featured-grid .card-title-large-green {
-        font-size: 24px;
-    }
-
-    #appView .featured-grid .card-title-small-clean {
-        font-size: 16px;
-    }
-
-    .footer-grid {
-        grid-template-columns: 1fr 1fr;
-    }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
 }
 
 /* =========================================
    11. RESPONSIVE - ĐIỆN THOẠI
 ========================================= */
-
 @media (max-width: 700px) {
-    .container {
-        padding-right: 16px;
-        padding-left: 16px;
-    }
+    .container { padding-right: 16px; padding-left: 16px; }
 
     .nav-wrapper {
         flex-direction: column;
@@ -761,250 +620,60 @@ footer {
         gap: 10px;
     }
 
-    .logo {
-        font-size: 23px;
-    }
+    .logo { font-size: 23px; }
+    .nav-menu { justify-content: center; gap: 3px; }
+    .nav-menu li a { padding: 7px 8px; font-size: 12px; }
 
-    .nav-menu {
-        justify-content: center;
-        gap: 3px;
-    }
-
-    .nav-menu li a {
-        padding: 7px 8px;
-        font-size: 12px;
-    }
-
-    main {
-        padding-top: 18px;
-    }
-
-    .section-title {
-        margin-bottom: 18px;
-        font-size: 22px;
-    }
-
-    /* Điện thoại xếp các bài thành một cột */
+    main { padding-top: 18px; }
+    .section-title { margin-bottom: 18px; font-size: 22px; }
 
     #appView .featured-grid {
         grid-template-columns: minmax(0, 1fr);
         gap: 25px;
     }
 
-    #appView .featured-grid .card-img-large {
-        width: 100%;
-        height: 250px;
-    }
+    #appView .featured-grid .card-img-large { height: 250px; }
+    #appView .featured-grid .card-img-small { height: 200px; }
+    #appView .featured-grid .featured-small-group { gap: 24px; }
+    #appView .featured-grid .card-title-large-green { font-size: 24px; line-height: 1.35; }
+    #appView .featured-grid .card-title-small-clean { font-size: 18px; }
+    #appView .featured-grid .card-category-green { margin-bottom: 8px; }
 
-    #appView .featured-grid .card-img-small {
-        width: 100%;
-        height: 200px;
-    }
+    .category-section-title { margin-top: 28px; font-size: 21px; }
 
-    #appView .featured-grid .featured-small-group {
-        gap: 24px;
-    }
+    .list-item { gap: 12px; }
+    .list-item-img { width: 125px; height: 95px; }
+    .list-item-title { margin-top: 0; font-size: 16px; }
+    .list-item-excerpt { font-size: 13px; }
+    .list-item-meta { font-size: 12px; }
 
-    #appView .featured-grid .card-title-large-green {
-        font-size: 24px;
-        line-height: 1.35;
-    }
+    .article-title-main { font-size: 27px; }
+    .article-sapo-main { font-size: 17px; }
+    .article-content-body { font-size: 16px; }
 
-    #appView .featured-grid .card-title-small-clean {
-        font-size: 18px;
-    }
+    .crawl-input-group { flex-direction: column; }
+    .crawl-input-group .btn-crawl { width: 100%; }
 
-    #appView .featured-grid .card-category-green {
-        margin-bottom: 8px;
-    }
+    .footer-grid { grid-template-columns: 1fr; gap: 25px; }
 
-    .category-section-title {
-        margin-top: 28px;
-        font-size: 21px;
-    }
-
-    .list-item {
-        gap: 12px;
-    }
-
-    .list-item-img {
-        width: 125px;
-        height: 95px;
-    }
-
-    .list-item-title {
-        margin-top: 0;
-        font-size: 16px;
-    }
-
-    .list-item-excerpt {
-        font-size: 13px;
-    }
-
-    .list-item-meta {
-        font-size: 12px;
-    }
-
-    .article-title-main {
-        font-size: 27px;
-    }
-
-    .article-sapo-main {
-        font-size: 17px;
-    }
-
-    .article-content-body {
-        font-size: 16px;
-    }
-
-    .crawl-input-group {
-        flex-direction: column;
-    }
-
-    .crawl-input-group .btn-crawl {
-        width: 100%;
-    }
-
-    .footer-grid {
-        grid-template-columns: 1fr;
-        gap: 25px;
-    }
-
-    .ls-item {
-        align-items: flex-start;
-    }
-
-    .ls-category {
-        white-space: normal;
-        text-align: right;
-    }
+    .ls-item { align-items: flex-start; }
+    .ls-category { white-space: normal; text-align: right; }
 }
 
 /* =========================================
    12. ĐIỆN THOẠI NHỎ
 ========================================= */
-
 @media (max-width: 380px) {
-    .container {
-        padding-right: 12px;
-        padding-left: 12px;
-    }
+    .container { padding-right: 12px; padding-left: 12px; }
+    .logo { font-size: 20px; }
+    .nav-menu li a { padding: 6px; font-size: 11px; }
 
-    .logo {
-        font-size: 20px;
-    }
+    #appView .featured-grid .card-img-large { height: 210px; }
+    #appView .featured-grid .card-img-small { height: 170px; }
+    #appView .featured-grid .card-title-large-green { font-size: 22px; }
+    #appView .featured-grid .card-title-small-clean { font-size: 17px; }
 
-    .nav-menu li a {
-        padding: 6px;
-        font-size: 11px;
-    }
-
-    #appView .featured-grid .card-img-large {
-        height: 210px;
-    }
-
-    #appView .featured-grid .card-img-small {
-        height: 170px;
-    }
-
-    #appView .featured-grid .card-title-large-green {
-        font-size: 22px;
-    }
-
-    #appView .featured-grid .card-title-small-clean {
-        font-size: 17px;
-    }
-
-    .list-item-img {
-        width: 105px;
-        height: 85px;
-    }
-
-    .list-item-title {
-        font-size: 15px;
-    }
-
-    .article-title-main {
-        font-size: 24px;
-    }
+    .list-item-img { width: 105px; height: 85px; }
+    .list-item-title { font-size: 15px; }
+    .article-title-main { font-size: 24px; }
 }
-
-/* ===== BO CUC TIN NOI BAT THEO ANH MAU ===== */
-
-#appView .featured-grid {
-    display: grid !important;
-    grid-template-columns: 2fr 1fr !important;
-    align-items: start !important;
-    gap: 24px !important;
-    width: 100% !important;
-    max-width: 1250px !important;
-    margin: 0 auto 30px !important;
-}
-
-#appView .featured-grid > .card-clean,
-#appView .featured-grid > .featured-small-group {
-    width: 100% !important;
-    min-width: 0 !important;
-}
-
-/* Anh bai lon ben trai */
-#appView .featured-grid .card-img-large {
-    display: block !important;
-    width: 100% !important;
-    height:  auto !important;
-    aspect-ratio: 16 / 9 !important;
-    object-fit: cover !important;
-    border-radius: 5px !important;
-    margin-bottom: 7px !important;
-}
-
-/* Cot hai bai nho ben phai */
-#appView .featured-grid .featured-small-group {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 22px !important;
-}
-
-/* Anh bai nho */
-#appView .featured-grid .card-img-small {
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    aspect-ratio: 16 / 9 !important;
-    object-fit: cover !important;
-    border-radius: 5px !important;
-    margin-bottom: 7px !important;
-}
-
-/* Tieu de bai lon */
-#appView .featured-grid .card-title-large-green {
-    font-size: 27px !important;
-    line-height: 1.35 !important;
-    margin-bottom: 9px !important;
-}
-
-/* Tieu de bai nho */
-#appView .featured-grid .card-title-small-clean {
-    font-size: 18px !important;
-    line-height: 1.4 !important;
-    margin-bottom: 5px !important;
-}
-
-/* Dien thoai: chuyen thanh mot cot */
-@media (max-width: 700px) {
-    #appView .featured-grid {
-        grid-template-columns: minmax(0, 1fr) !important;
-        gap: 24px !important;
-    }
-
-    #appView .featured-grid .card-img-large,
-    #appView .featured-grid .card-img-small {
-        aspect-ratio: 16 / 9 !important;
-        height: auto !important;
-    }
-
-    #appView .featured-grid .card-title-large-green {
-        font-size: 23px !important;
-    }
-}
-
