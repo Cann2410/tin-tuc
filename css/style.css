@@ -1,3 +1,4 @@
+
 /* =========================================
    1. THIẾT LẬP CHUNG
 ========================================= */
@@ -52,8 +53,9 @@ header {
 .nav-wrapper {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 15px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
     padding-top: 8px;
     padding-bottom: 8px;
 }
@@ -71,29 +73,31 @@ header {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 2px;
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
     list-style: none;
-    overflow-x: auto;
-    scrollbar-width: none;
 }
 
 .nav-menu::-webkit-scrollbar {
     display: none;
 }
 
-.nav-menu li {
+.nav-menu > li {
     position: relative;
     flex-shrink: 0;
 }
 
 .nav-menu li a {
     display: block;
-    padding: 6px 8px;
+    padding: 8px 12px;
     border-radius: 4px;
     color: #fff;
-    font-size: 13.5px;
+    font-size: 15px;
     font-weight: 650;
+    line-height: 1.5;
     white-space: nowrap;
     cursor: pointer;
     transition: background 0.2s ease;
@@ -115,41 +119,52 @@ header {
     background: #e88900 !important;
 }
 
-.has-dropdown:hover .dropdown-menu,
-.has-dropdown:focus-within .dropdown-menu {
-    display: block;
+/* Danh mục cha có menu con */
+.nav-menu > li.has-dropdown {
+    position: relative;
 }
 
-.dropdown-menu {
+/* Menu xổ xuống */
+.nav-menu > li.has-dropdown > .dropdown-menu {
     display: none;
     position: absolute;
     top: 100%;
     left: 0;
     z-index: 10001;
-    min-width: 200px;
+    min-width: 230px;
     padding: 6px 0;
-    border-radius: 5px;
-    background: #ffffff !important;
+    margin: 0;
     border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    background: #fff !important;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
     list-style: none;
 }
 
-.dropdown-menu li {
+/* Hiện menu con khi rê chuột hoặc dùng bàn phím */
+.nav-menu > li.has-dropdown:hover > .dropdown-menu,
+.nav-menu > li.has-dropdown:focus-within > .dropdown-menu {
+    display: block;
+}
+
+.nav-menu .dropdown-menu li {
+    display: block;
     width: 100%;
 }
 
-.dropdown-menu li a {
+.nav-menu .dropdown-menu li a {
     display: block;
+    width: 100%;
     padding: 9px 16px;
     border-radius: 0;
-    color: #333333 !important;
-    font-size: 13.5px;
+    color: #333 !important;
+    font-size: 14px;
     font-weight: 500;
+    line-height: 1.5;
     white-space: nowrap;
 }
 
-.dropdown-menu li a:hover {
+.nav-menu .dropdown-menu li a:hover {
     background: #f0fdf4 !important;
     color: #008837 !important;
 }
@@ -206,7 +221,7 @@ main {
 }
 
 /* =========================================
-   4. KHUNG TIN NỔI BẬT (ĐÚNG 100% KÍCH THƯỚC THEO MẪU)
+   4. KHUNG TIN NỔI BẬT
 ========================================= */
 #appView .featured-grid {
     display: grid;
@@ -230,13 +245,13 @@ main {
     cursor: pointer;
 }
 
-/* --- BÀI VIẾT LỚN BÊN TRÁI --- */
+/* Bài viết lớn bên trái */
 #appView .featured-grid .card-img-large {
     display: block;
     width: 100%;
-    height: 420px; /* Chiều cao ảnh lớn nét căng theo mẫu */
+    height: 420px;
     margin-bottom: 12px;
-    border-radius: 8px; /* Bo góc ảnh 8px chuẩn */
+    border-radius: 8px;
     object-fit: cover;
     object-position: center;
     background: #f0f0f0;
@@ -254,7 +269,7 @@ main {
 
 #appView .featured-grid .card-title-large-green {
     margin: 0 0 10px;
-    color: #008837; /* Tiêu đề bài lớn màu xanh đặc trưng Dân Trí */
+    color: #008837;
     font-size: 24px;
     font-weight: 800;
     line-height: 1.35;
@@ -274,7 +289,7 @@ main {
     line-height: 1.4;
 }
 
-/* --- 2 BÀI VIẾT NHỎ BÊN PHẢI --- */
+/* Hai bài viết nhỏ bên phải */
 #appView .featured-grid .featured-small-group {
     display: flex;
     flex-direction: column;
@@ -286,7 +301,7 @@ main {
 #appView .featured-grid .card-img-small {
     display: block;
     width: 100%;
-    height: 215px; /* Chiều cao ảnh nhỏ tỷ lệ 16:9 chuẩn mẫu */
+    height: 215px;
     margin-bottom: 8px;
     border-radius: 8px;
     object-fit: cover;
@@ -296,20 +311,19 @@ main {
 
 #appView .featured-grid .card-title-small-clean {
     margin: 0 0 4px;
-    color: #111111; /* Tiêu đề bài nhỏ màu đen đậm chuẩn 100% theo mẫu */
+    color: #111;
     font-size: 17.5px;
     font-weight: 750;
     line-height: 1.35;
     overflow-wrap: break-word;
 }
 
-/* Hiệu ứng di chuột */
 #appView .featured-grid .card-clean:hover .card-title-large-green {
     color: #006b2b;
 }
 
 #appView .featured-grid .featured-small-group .card-clean:hover .card-title-small-clean {
-    color: #008837; /* Rê chuột bài nhỏ chuyển màu xanh */
+    color: #008837;
 }
 
 /* =========================================
@@ -705,16 +719,22 @@ footer {
     }
 
     .nav-wrapper {
-        align-items: center;
+        align-items: flex-start;
     }
 
     .logo {
         font-size: 22px;
     }
 
+    .nav-menu {
+        flex-wrap: wrap;
+        width: 100%;
+        overflow: visible;
+    }
+
     .nav-menu li a {
-        padding: 6px 7px;
-        font-size: 12.5px;
+        padding: 7px 9px;
+        font-size: 13px;
     }
 
     #appView .featured-grid {
@@ -763,14 +783,21 @@ footer {
     }
 
     .nav-menu {
+        display: flex;
         width: 100%;
+        flex-wrap: wrap;
         justify-content: flex-start;
         gap: 2px;
+        overflow: visible;
     }
 
     .nav-menu li a {
-        padding: 6px 7px;
+        padding: 6px 8px;
         font-size: 12px;
+    }
+
+    .nav-menu > li.has-dropdown > .dropdown-menu {
+        min-width: 210px;
     }
 
     main {
