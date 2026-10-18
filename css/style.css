@@ -770,8 +770,10 @@ footer {
     text-decoration: underline;
 }
 
+```css
 .social-icons {
     display: flex;
+    align-items: center;
     gap: 12px;
     margin-top: 15px;
 }
@@ -780,17 +782,26 @@ footer {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     background: #3c3c3c;
-    cursor: pointer;
-    transition: background 0.2s ease;
+    color: #fff;
+    font-size: 20px;
+    text-decoration: none;
+    transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .social-icon-btn:hover {
     background: #008837;
+    color: #fff;
+    transform: translateY(-3px);
 }
+
+.social-icon-btn i {
+    line-height: 1;
+}
+```
 
 .footer-bottom {
     padding-top: 20px;
