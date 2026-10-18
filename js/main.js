@@ -1,43 +1,41 @@
 /* =========================================
-   1. DỮ LIỆU MẪU MẶC ĐỊNH (ĐÃ ĐỒNG BỘ DỰ PHÒNG CHUẨN)
+   1. DỮ LIỆU MẪU MẶC ĐỊNH
 ========================================= */
 
 const DEFAULT_MENU = [
-    { id: "home", title: "Home", url: "https://dantri.com.vn/", type: "home" },
-    { id: "Mới nhất", title: "Mới nhất", url: "https://dantri.com.vn/tin-moi-nhat.htm", type: "category" },
+    { id: "home", title: "Trang chủ", type: "home" },
+    { id: "moi-nhat", title: "Mới nhất", type: "category" },
     {
-        id: "Thế giới",
+        id: "the-gioi",
         title: "Thế giới",
-        url: "https://dantri.com.vn/the-gioi.htm",
         type: "category",
         children: [
-            { id: "Quân sự", title: "Quân sự", url: "https://dantri.com.vn/the-gioi/quan-su.htm" },
-            { id: "Phân tích - Bình luận", title: "Phân tích - Bình luận", url: "https://dantri.com.vn/the-gioi/phan-tich-binh-luan.htm" },
-            { id: "Thế giới đó đây", title: "Thế giới đó đây", url: "https://dantri.com.vn/the-gioi/the-gioi-do-day.htm" },
-            { id: "Kiều bào", title: "Kiều bào", url: "https://dantri.com.vn/the-gioi/kieu-bao.htm" }
+            { id: "quan-su", title: "Quân sự", type: "category" },
+            { id: "phan-tich", title: "Phân tích - Bình luận", type: "category" },
+            { id: "the-gioi-do-day", title: "Thế giới đó đây", type: "category" },
+            { id: "kieu-bao", title: "Kiều bào", type: "category" }
         ]
     },
     {
-        id: "Thời sự",
+        id: "thoi-su",
         title: "Thời sự",
-        url: "https://dantri.com.vn/thoi-su.htm",
         type: "category",
         children: [
-            { id: "Chính trị", title: "Chính trị", url: "https://dantri.com.vn/thoi-su/chinh-tri.htm" },
-            { id: "Giao thông", title: "Giao thông", url: "https://dantri.com.vn/thoi-su/giao-thong.htm" },
-            { id: "Môi trường", title: "Môi trường", url: "https://dantri.com.vn/thoi-su/moi-truong.htm" },
-            { id: "Nóng trên mạng", title: "Nóng trên mạng", url: "https://dantri.com.vn/thoi-su/nong-tren-mang.htm" }
+            { id: "chinh-tri", title: "Chính trị", type: "category" },
+            { id: "giao-thong", title: "Giao thông", type: "category" },
+            { id: "moi-truong", title: "Môi trường", type: "category" },
+            { id: "nong-tren-mang", title: "Nóng trên mạng", type: "category" }
         ]
     },
-    { id: "Pháp luật", title: "Pháp luật", url: "https://dantri.com.vn/phap-luat.htm", type: "category" },
-    { id: "Sức khỏe", title: "Sức khỏe", url: "https://dantri.com.vn/suc-khoe.htm", type: "category" },
-    { id: "Đời sống", title: "Đời sống", url: "https://dantri.com.vn/doi-song.htm", type: "category" },
-    { id: "Du lịch", title: "Du lịch", url: "https://dantri.com.vn/du-lich.htm", type: "category" },
-    { id: "Kinh doanh", title: "Kinh doanh", url: "https://dantri.com.vn/kinh-doanh.htm", type: "category" },
-    { id: "Thể thao", title: "Thể thao", url: "https://dantri.com.vn/the-thao.htm", type: "category" },
-    { id: "Bất động sản", title: "Bất động sản", url: "https://dantri.com.vn/bat-dong-san.htm", type: "category" },
-    { id: "Giải trí", title: "Giải trí", url: "https://dantri.com.vn/giai-tri.htm", type: "category" },
-    { id: "Giáo dục", title: "Giáo dục", url: "https://dantri.com.vn/giao-duc.htm", type: "category" }
+    { id: "phap-luat", title: "Pháp luật", type: "category" },
+    { id: "suc-khoe", title: "Sức khỏe", type: "category" },
+    { id: "doi-song", title: "Đời sống", type: "category" },
+    { id: "du-lich", title: "Du lịch", type: "category" },
+    { id: "kinh-doanh", title: "Kinh doanh", type: "category" },
+    { id: "the-thao", title: "Thể thao", type: "category" },
+    { id: "bat-dong-san", title: "Bất động sản", type: "category" },
+    { id: "giai-tri", title: "Giải trí", type: "category" },
+    { id: "giao-duc", title: "Giáo dục", type: "category" }
 ];
 
 const DEFAULT_POSTS = [
@@ -244,7 +242,11 @@ function sortPostsByDate(posts) {
    3. QUẢN LÝ LOCALSTORAGE
 ========================================= */
 
+// Sửa: luôn giữ các mục con mặc định khi menu cũ trong
+// LocalStorage chưa có children hoặc còn thiếu mục con.
 function getCategories() {
+    let storedMenu = [];
+
     try {
         const raw = localStorage.getItem("categories");
 
@@ -252,19 +254,72 @@ function getCategories() {
             const data = JSON.parse(raw);
             const menu = Array.isArray(data) ? data : data?.menu;
 
-            if (Array.isArray(menu) && menu.length > 0) {
-                const normalized = menu
+            if (Array.isArray(menu)) {
+                storedMenu = menu
                     .map(normalizeMenuItem)
                     .filter(Boolean);
-
-                if (normalized.length > 0) return normalized;
             }
         }
     } catch (error) {
         console.warn("Không đọc được categories:", error);
     }
 
-    return DEFAULT_MENU.map(normalizeMenuItem).filter(Boolean);
+    const defaultMenu = DEFAULT_MENU
+        .map(normalizeMenuItem)
+        .filter(Boolean);
+
+    if (storedMenu.length === 0) {
+        return defaultMenu;
+    }
+
+    return storedMenu.map(item => {
+        const defaultItem = defaultMenu.find(
+            defaultCat =>
+                normalizeCategoryId(defaultCat.id) ===
+                normalizeCategoryId(item.id)
+        );
+
+        if (!defaultItem) {
+            return item;
+        }
+
+        const existingChildren = Array.isArray(item.children)
+            ? item.children
+            : [];
+
+        const defaultChildren = Array.isArray(defaultItem.children)
+            ? defaultItem.children
+            : [];
+
+        // Giữ nguyên mục con hiện có, bổ sung mục con còn thiếu.
+        const mergedChildren = [...existingChildren];
+
+        defaultChildren.forEach(defaultChild => {
+            const exists = mergedChildren.some(child =>
+                normalizeCategoryId(child.id) ===
+                    normalizeCategoryId(defaultChild.id) ||
+                normalizeCategoryId(child.title) ===
+                    normalizeCategoryId(defaultChild.title)
+            );
+
+            if (!exists) {
+                mergedChildren.push(defaultChild);
+            }
+        });
+
+        return {
+            ...defaultItem,
+            ...item,
+            children: mergedChildren
+        };
+    }).concat(
+        defaultMenu.filter(defaultItem =>
+            !storedMenu.some(item =>
+                normalizeCategoryId(item.id) ===
+                normalizeCategoryId(defaultItem.id)
+            )
+        )
+    );
 }
 
 function getPosts() {
@@ -380,7 +435,6 @@ async function initDataFromFiles() {
    4. THANH ĐIỀU HƯỚNG
 ========================================= */
 
-
 function renderNavbar() {
     const categories = getCategories();
     const navMenuEl = document.getElementById("navbarMenu");
@@ -396,15 +450,11 @@ function renderNavbar() {
         const title = escapeHtml(cat.title || cat.id);
         const navId = escapeHtml(normalizeCategoryId(cat.id));
 
-        const children = Array.isArray(cat.children)
-            ? cat.children.filter(child => child && child.id)
-            : [];
-
-        if (children.length > 0) {
+        if (Array.isArray(cat.children) && cat.children.length > 0) {
             const dropdownClass =
-                normalizeCategoryId(cat.title || cat.id) === "the-gioi"
+                normalizeCategoryId(cat.id) === "the-gioi"
                     ? "dropdown-world"
-                    : normalizeCategoryId(cat.title || cat.id) === "thoi-su"
+                    : normalizeCategoryId(cat.id) === "thoi-su"
                         ? "dropdown-current"
                         : "";
 
@@ -412,13 +462,15 @@ function renderNavbar() {
                 <ul class="dropdown-menu ${dropdownClass}">
             `;
 
-            children.forEach(child => {
+            cat.children.forEach(child => {
+                if (!child || !child.id) return;
+
                 const childArg = makeClickArg(child.id);
 
                 subHtml += `
                     <li>
                         <a href="#"
-                           onclick="event.preventDefault(); renderCategory(decodeURIComponent('${childArg}'))">
+                           onclick="event.preventDefault();renderCategory(decodeURIComponent('${childArg}'))">
                             ${escapeHtml(child.title || child.id)}
                         </a>
                     </li>
@@ -430,7 +482,7 @@ function renderNavbar() {
             navHtml += `
                 <li class="has-dropdown">
                     <a href="#"
-                       onclick="event.preventDefault(); renderCategory(decodeURIComponent('${idArg}'))"
+                       onclick="event.preventDefault();renderCategory(decodeURIComponent('${idArg}'))"
                        id="nav-${navId}"
                        aria-haspopup="true">
                         ${title} <span aria-hidden="true">▾</span>
@@ -442,7 +494,7 @@ function renderNavbar() {
             navHtml += `
                 <li>
                     <a href="#"
-                       onclick="event.preventDefault(); renderCategory(decodeURIComponent('${idArg}'))"
+                       onclick="event.preventDefault();renderCategory(decodeURIComponent('${idArg}'))"
                        id="nav-${navId}">
                         ${title}
                     </a>
@@ -453,7 +505,7 @@ function renderNavbar() {
         footerHtml += `
             <li>
                 <a href="#"
-                   onclick="event.preventDefault(); renderCategory(decodeURIComponent('${idArg}'))">
+                   onclick="event.preventDefault();renderCategory(decodeURIComponent('${idArg}'))">
                     ${title}
                 </a>
             </li>
@@ -463,7 +515,7 @@ function renderNavbar() {
     navHtml += `
         <li>
             <a href="#"
-               onclick="event.preventDefault(); renderCrawlerPage()"
+               onclick="event.preventDefault();renderCrawlerPage()"
                class="btn-crawler">
                 Crawler Page
             </a>
@@ -473,7 +525,6 @@ function renderNavbar() {
     if (navMenuEl) navMenuEl.innerHTML = navHtml;
     if (footerCatEl) footerCatEl.innerHTML = footerHtml;
 }
-
 
 function setActiveNavigation(catId) {
     document.querySelectorAll(".nav-menu a").forEach(link => {
@@ -1188,4 +1239,3 @@ if (document.readyState === "loading") {
 } else {
     initApp();
 }
-
