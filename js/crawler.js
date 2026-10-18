@@ -1,997 +1,573 @@
-/**
- * CROWLER TIN TỨC DÂN TRÍ
- * Trích xuất bài báo, tối ưu tốc độ cào song song & loại bỏ logo/banner lặp lại.
- */
 
-// ======================================================
-// 1. DANH MỤC
-// ======================================================
+/* =========================================
+   DAN TRI NEWS - CRAWLER.JS
+   ========================================= */
 
-const CATEGORY_MAP = {
-    "thoi-su": "Thời sự",
-    "the-gioi": "Thế giới",
-    "kinh-doanh": "Kinh doanh",
-    "bat-dong-san": "Bất động sản",
-    "the-thao": "Thể thao",
-    "lao-dong-viec-lam": "Lao động",
-    "suc-khoe": "Sức khỏe",
-    "van-hoa": "Văn hóa",
-    "giai-tri": "Giải trí",
-    "du-lich": "Du lịch",
-    "phap-luat": "Pháp luật",
-    "doi-song": "Đời sống",
-    "cong-nghe": "Công nghệ",
-    "giao-duc": "Giáo dục",
-    "o-to-xe-may": "Xe ++",
-    "xe": "Xe ++",
-    "tinh-yeu-gioi-tinh": "Tình yêu",
-    "khoa-hoc": "Khoa học",
-    "tam-long-nhan-ai": "Nhân ái",
-    "noi-vu": "Nội vụ",
-    "no-vu": "Nội vụ"
-};
+(function () {
+    "use strict";
 
-// ======================================================
-// 2. CHUẨN HÓA DỮ LIỆU
-// ======================================================
+    const DEFAULT_IMAGE =
+        "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800";
 
-function cleanText(value) {
-    return String(value || "")
-        .replace(/\u00a0/g, " ")
-        .replace(/\r/g, "")
-        .replace(/[ \t]+/g, " ")
-        .replace(/\n[ \t]+/g, "\n")
-        .trim();
-}
+    const CATEGORY_MAP = {
+        "thoi-su": "Thời sự",
+        "the-gioi": "Thế giới",
+        "kinh-doanh": "Kinh doanh",
+        "bat-dong-san": "Bất động sản",
+        "the-thao": "Thể thao",
+        "phap-luat": "Pháp luật",
+        "suc-khoe": "Sức khỏe",
+        "doi-song": "Đời sống",
+        "du-lich": "Du lịch",
+        "giai-tri": "Giải trí",
+        "giao-duc": "Giáo dục",
+        "cong-nghe": "Công nghệ"
+    };
 
-function cleanTitle(value) {
-    return cleanText(value)
-        .replace(/^Title:\s*/i, "")
-        .replace(/^#{1,6}\s+/, "")
-        .replace(/\s*[-|]\s*Báo Dân trí\s*$/i, "")
-        .replace(/\s*-\s*Dân trí\s*$/i, "")
-        .trim();
-}
-
-function cleanDantriImageUrl(rawUrl, baseUrl = "https://dantri.com.vn") {
-    if (!rawUrl) return "";
-
-    let value = String(rawUrl).trim();
-
-    if (!value || /^(data:|blob:|javascript:)/i.test(value)) {
-        return "";
+    function cleanText(value) {
+        return String(value || "")
+            .replace(/<[^>]*>/g, " ")
+            .replace(/&nbsp;|&#160;/gi, " ")
+            .replace(/&amp;/gi, "&")
+            .replace(/&quot;/gi, '"')
+            .replace(/&#39;|&apos;/gi, "'")
+            .replace(/&lt;/gi, "<")
+            .replace(/&gt;/gi, ">")
+            .replace(/\s+/g, " ")
+            .trim();
     }
 
-    if (value.startsWith("//")) {
-        value = "https:" + value;
-    } else if (value.startsWith("/")) {
-        value = new URL(value, baseUrl).href;
-    } else if (!/^https?:\/\//i.test(value)) {
-        return "";
+    function normalizeCategoryId(value) {
+        return String(value || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d")
+            .replace(/Đ/g, "D")
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
     }
 
-    try {
-        const parsed = new URL(value);
+    function getUrlInfo(url) {
+        try {
+            const parsed = new URL(url);
+            const parts = parsed.pathname.split("/").filter(Boolean);
+            const slug = (parts.pop() || "")
+                .replace(/\.html?$/i, "")
+                .replace(/\.htm$/i, "");
 
-        if (!["http:", "https:"].includes(parsed.protocol)) {
+            const categorySlug = parts[0] || "thoi-su";
+
+            return {
+                url: parsed.href,
+                slug,
+                categorySlug: normalizeCategoryId(categorySlug),
+                category: CATEGORY_MAP[normalizeCategoryId(categorySlug)] ||
+                    categorySlug.replace(/-/g, " ")
+            };
+        } catch {
+            return {
+                url: String(url || ""),
+                slug: "",
+                categorySlug: "thoi-su",
+                category: "Thời sự"
+            };
+        }
+    }
+
+    function titleFromSlug(slug) {
+        return String(slug || "")
+            .replace(/-\d{10,}$/g, "")
+            .replace(/-/g, " ")
+            .replace(/\b\w/g, char => char.toUpperCase())
+            .trim();
+    }
+
+    function normalizeDate(value) {
+        if (!value) return "";
+
+        const input = String(value).trim();
+
+        const date = new Date(input);
+
+        if (!Number.isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+            const hour = String(date.getHours()).padStart(2, "0");
+            const minute = String(date.getMinutes()).padStart(2, "0");
+
+            return `${year}-${month}-${day} ${hour}:${minute}`;
+        }
+
+        const match = input.match(
+            /(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/
+        );
+
+        if (match) {
+            return `${match[1]}-${match[2]}-${match[3]} ${match[4]}:${match[5]}`;
+        }
+
+        return input;
+    }
+
+    function cleanImageUrl(value, baseUrl) {
+        if (!value) return "";
+
+        let url = String(value).trim();
+
+        if (
+            !url ||
+            url.startsWith("data:") ||
+            url.startsWith("blob:")
+        ) {
             return "";
         }
 
-        return parsed.href;
-    } catch {
-        return "";
-    }
-}
-
-function getImgSrcFromElement(img) {
-    if (!img) return "";
-
-    return cleanDantriImageUrl(
-        img.getAttribute("data-original") ||
-        img.getAttribute("data-src") ||
-        img.getAttribute("data-lazy-src") ||
-        img.getAttribute("data-srcset")?.split(",")[0]?.trim().split(/\s+/)[0] ||
-        img.getAttribute("src") ||
-        ""
-    );
-}
-
-function getUrlInfo(url) {
-    const parsedUrl = new URL(url);
-    const parts = parsedUrl.pathname.split("/").filter(Boolean);
-    const fileName = parts[parts.length - 1] || "";
-    const categorySlug = parts.length > 1 ? parts[0] : "thoi-su";
-
-    const idMatch = fileName.match(/(\d+)\.htm$/i);
-    const articleId = idMatch ? idMatch[1] : "";
-
-    const slug = fileName
-        .replace(/\.htm$/i, "")
-        .replace(/-\d+$/, "");
-
-    return {
-        id: articleId ? "dtri-" + articleId : "dtri-" + slug,
-        slug,
-        categorySlug,
-        categoryInfo: {
-            title: CATEGORY_MAP[categorySlug] || "Thời sự",
-            id: categorySlug
-        }
-    };
-}
-
-function titleFromSlug(slug) {
-    return String(slug || "")
-        .replace(/-/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-}
-
-function normalizeExcerpt(value) {
-    return cleanText(value)
-        .replace(/^sapo:\s*/i, "")
-        .replace(/^mô tả:\s*/i, "")
-        .replace(/^#{1,6}\s+/, "")
-        .replace(/^\(Dân trí\)\s*[-–]\s*/i, "")
-        .replace(/^Dân trí\s*[-–:]\s*/i, "")
-        .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, "$1")
-        .replace(/\*\*/g, "")
-        .trim();
-}
-
-function normalizeDate(value) {
-    if (!value) return "";
-
-    const text = cleanText(value);
-
-    let match = text.match(/(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
-    if (match) {
-        return `${match[1]}-${match[2]}-${match[3]} ${match[4]}:${match[5]}`;
-    }
-
-    match = text.match(/(\d{4})-(\d{2})-(\d{2})/);
-    if (match) {
-        return `${match[1]}-${match[2]}-${match[3]}`;
-    }
-
-    match = text.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s*[-–,]?\s*(\d{1,2}):(\d{2})/);
-    if (match) {
-        return `${match[3]}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")} ${match[4].padStart(2, "0")}:${match[5]}`;
-    }
-
-    match = text.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if (match) {
-        return `${match[3]}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`;
-    }
-
-    return "";
-}
-
-// ======================================================
-// 3. LÀM SẠCH NỘI DUNG
-// ======================================================
-
-function normalizeContent(text) {
-    if (!text) return "";
-
-    const lines = String(text)
-        .replace(/\r/g, "")
-        .split("\n")
-        .map(line => line.trim());
-
-    const stopPatterns = [
-        /^thêm dân trí trên google/i,
-        /^không bỏ lỡ tin mới/i,
-        /^đọc nhiều trong\b/i,
-        /^bình luận\s*\(/i,
-        /^sponsored links$/i,
-        /^promoted links$/i,
-        /^you may like$/i,
-        /^you may also like$/i,
-        /^related articles$/i,
-        /^bài liên quan/i,
-        /^tin liên quan/i,
-        /^by taboola$/i,
-        /^©\s*2005-/i,
-        /^cơ quan của bộ nội vụ/i,
-        /^tổng biên tập:/i,
-        /^giấy phép hoạt động/i,
-        /^địa chỉ tòa soạn:/i,
-        /^văn phòng đại diện/i,
-        /^liên hệ quảng cáo/i,
-        /^theo dõi dân trí/i,
-        /^đọc báo dân trí trên mobile/i,
-        /^quảng cáo của\b/i
-    ];
-
-    const unwantedPatterns = [
-        /^Published Time:/i,
-        /^URL Source:/i,
-        /^Markdown Content:/i,
-        /^Title:/i,
-        /^quảng cáo của\b/i,
-        /^xem thêm$/i,
-        /^facebook$/i,
-        /^youtube$/i,
-        /^tiktok$/i,
-        /^telegram$/i,
-        /^giọng nam/i,
-        /^giọng nữ/i,
-        /^tags?:$/i,
-        /^ảnh:\s*/i,
-        /^photo:\s*/i,
-        /^chú thích ảnh:\s*/i,
-        /^caption:\s*/i
-    ];
-
-    const result = [];
-    let previous = "";
-
-    for (let line of lines) {
-        line = line
-            .replace(/^#{1,6}\s+/, "")
-            .replace(/^\*\s+/, "")
-            .trim();
-
-        if (!line) continue;
-
-        if (stopPatterns.some(pattern => pattern.test(line))) {
-            break;
+        try {
+            url = new URL(url, baseUrl).href;
+        } catch {
+            return "";
         }
 
-        if (unwantedPatterns.some(pattern => pattern.test(line))) {
-            continue;
-        }
-
-        if (/^https?:\/\/\S+$/i.test(line)) continue;
-        if (/^!\[[^\]]*\]\([^)]*\)$/.test(line)) continue;
-        if (/^\[[^\]]*\]\(https?:\/\/[^)]+\)$/.test(line)) continue;
-
-        if (/^(trang chủ|mới nhất|sự kiện|thế giới|thời sự|kinh doanh|giải trí|thể thao|giáo dục|du lịch|pháp luật|sức khỏe)$/i.test(line)) {
-            continue;
-        }
-
-        line = line
-            .replace(/\*\*/g, "")
-            .replace(/`/g, "")
-            .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, "$1")
-            .trim();
-
-        if (line.length < 2 || line === previous) continue;
-
-        result.push(line);
-        previous = line;
-    }
-
-    return result.join("\n\n").trim();
-}
-
-function isValidArticleContent(article) {
-    if (!article || !article.title || !article.content) {
-        return false;
-    }
-
-    if (cleanText(article.title).length < 8) return false;
-    if (cleanText(article.content).length < 150) return false;
-
-    const badContent = [
-        "Nội dung bài viết...",
-        "Published Time:",
-        "Markdown Content:",
-        "Access denied",
-        "Just a moment..."
-    ];
-
-    return !badContent.some(value =>
-        article.content.includes(value)
-    );
-}
-
-// ======================================================
-// 4. ẢNH ĐẠI DIỆN - LỌC BỎ LOGO VÀ BANNER CHẮC CHẮN
-// ======================================================
-
-function isLikelyLogoOrIcon(url) {
-    if (!url) return true;
-
-    let lower = "";
-    try {
-        lower = new URL(url).pathname.toLowerCase();
-    } catch {
-        return true;
-    }
-
-    // Bổ sung các từ khóa nhận diện Logo/Banner nền xanh Dân Trí chia sẻ Facebook
-    return /logo|favicon|icon|avatar|default|placeholder|no-image|noimage|share-fb|dt-logo|banner|sprite/.test(lower);
-}
-
-function chooseArticleImage(candidates, baseUrl) {
-    for (const candidate of candidates) {
-        const url = cleanDantriImageUrl(candidate, baseUrl);
-
-        if (!url || isLikelyLogoOrIcon(url)) continue;
+        if (!/^https?:\/\//i.test(url)) return "";
 
         return url;
     }
 
-    return "";
-}
+    function getMeta(doc, selectors) {
+        for (const selector of selectors) {
+            const element = doc.querySelector(selector);
 
-// ======================================================
-// 5. TẠO JSON CHUẨN
-// ======================================================
+            if (!element) continue;
 
-function buildArticle({
-    url,
-    title,
-    excerpt,
-    content,
-    author,
-    category,
-    publishedAt,
-    image
-}) {
-    const info = getUrlInfo(url);
-    const cleanImage = chooseArticleImage([image], url);
+            const value =
+                element.getAttribute("content") ||
+                element.getAttribute("datetime") ||
+                element.textContent;
 
-    return {
-        id: info.id,
-        title: cleanTitle(title) || titleFromSlug(info.slug),
-        slug: info.slug,
-        excerpt: normalizeExcerpt(excerpt),
-        content: normalizeContent(content),
-        author: cleanText(author)
-            .replace(/^tác giả:\s*/i, "")
-            .replace(/^by\s*:\s*/i, "")
-            .trim(),
-        category: cleanText(category) || info.categoryInfo.title,
-        publishedAt: normalizeDate(publishedAt),
-        source: "dantri.com.vn",
-        url,
-        image: cleanImage,
-        thumbnail: cleanImage,
-        categoryId: info.categorySlug
-    };
-}
+            if (value && value.trim()) return value.trim();
+        }
 
-// ======================================================
-// 6. PHÂN TÍCH HTML
-// ======================================================
-
-function parseDantriDom(htmlText, url) {
-    const doc = new DOMParser().parseFromString(htmlText, "text/html");
-    const info = getUrlInfo(url);
-
-    const getText = selector => {
-        const element = doc.querySelector(selector);
-        return element ? cleanText(element.textContent) : "";
-    };
-
-    const getMeta = selector => {
-        const element = doc.querySelector(selector);
-        return element ? cleanText(element.getAttribute("content")) : "";
-    };
-
-    const structuredData = [];
-    doc.querySelectorAll('script[type="application/ld+json"]').forEach(script => {
-        try {
-            const parsed = JSON.parse(script.textContent);
-
-            const collect = item => {
-                if (!item) return;
-                if (Array.isArray(item)) {
-                    item.forEach(collect);
-                    return;
-                }
-                if (typeof item !== "object") return;
-
-                structuredData.push(item);
-                if (Array.isArray(item["@graph"])) {
-                    item["@graph"].forEach(collect);
-                }
-            };
-
-            collect(parsed);
-        } catch {}
-    });
-
-    const articleData = structuredData.find(item => {
-        const type = item["@type"];
-        const types = Array.isArray(type) ? type : [type];
-        return types.some(value =>
-            ["NewsArticle", "Article", "ReportageNewsArticle"].includes(value)
-        );
-    }) || {};
-
-    const jsonAuthor = articleData.author;
-    let jsonAuthorName = "";
-
-    if (typeof jsonAuthor === "string") {
-        jsonAuthorName = jsonAuthor;
-    } else if (Array.isArray(jsonAuthor)) {
-        jsonAuthorName = jsonAuthor
-            .map(item => typeof item === "string" ? item : item?.name || "")
-            .filter(Boolean)
-            .join(", ");
-    } else if (jsonAuthor && typeof jsonAuthor === "object") {
-        jsonAuthorName = jsonAuthor.name || "";
+        return "";
     }
 
-    const title = cleanTitle(
-        getMeta('meta[property="og:title"]') ||
-        getMeta('meta[name="twitter:title"]') ||
-        articleData.headline ||
-        getText("#articleContent h1") ||
-        getText("h1.title-page") ||
-        getText("h1.singular-title") ||
-        getText("article h1") ||
-        getText("h1") ||
-        titleFromSlug(info.slug)
-    );
-
-    const excerpt = normalizeExcerpt(
-        getMeta('meta[property="og:description"]') ||
-        getMeta('meta[name="description"]') ||
-        articleData.description ||
-        getText("#articleContent [data-slot='sapo']") ||
-        getText("#articleContent .singular-sapo") ||
-        getText(".singular-sapo") ||
-        getText(".e-magazine__sapo") ||
-        getText(".sapo") ||
-        ""
-    );
-
-    const contentSelectors = [
-        "#articleContent [data-slot='content']",
-        "#articleContent .singular-content",
-        "#articleContent .e-magazine__body",
-        "#articleContent .e-magazine__content",
-        "#articleContent .article-body",
-        "[itemprop='articleBody']",
-        "article .singular-content",
-        "article .e-magazine__body",
-        "article .article-body",
-        ".singular-content",
-        ".e-magazine__body",
-        ".e-magazine__content",
-        ".article-body"
-    ];
-
-    let contentText = "";
-
-    for (const selector of contentSelectors) {
-        const element = doc.querySelector(selector);
-        if (!element) continue;
-
-        const clone = element.cloneNode(true);
-
-        clone.querySelectorAll([
-            "script", "style", "iframe", "button", "form",
-            "nav", "header", "footer",
-            "figure figcaption",
-            ".relate-container", ".related-news",
-            ".box-tin-lien-quan", ".article-related",
-            ".related-articles", ".tags", ".article-tags",
-            ".comment", ".comments", ".advertisement", ".ads",
-            "[class*='related']", "[class*='recommend']",
-            "[class*='comment']", "[class*='advert']",
-            "[class*='banner']", "[id*='related']",
-            "[id*='comment']", "[id*='ads']"
-        ].join(",")).forEach(node => node.remove());
-
-        const blocks = Array.from(
-            clone.querySelectorAll("p, h2, h3, h4, blockquote")
+    function getJsonLd(doc) {
+        const scripts = doc.querySelectorAll(
+            'script[type="application/ld+json"]'
         );
 
-        const candidate = blocks
-            .map(node => cleanText(node.textContent))
-            .filter(text => text.length >= 2)
+        for (const script of scripts) {
+            try {
+                const data = JSON.parse(script.textContent || "");
+
+                const queue = Array.isArray(data) ? [...data] : [data];
+
+                while (queue.length) {
+                    const item = queue.shift();
+
+                    if (!item || typeof item !== "object") continue;
+
+                    if (Array.isArray(item)) {
+                        queue.push(...item);
+                        continue;
+                    }
+
+                    if (item["@graph"]) {
+                        queue.push(...item["@graph"]);
+                    }
+
+                    const type = item["@type"];
+                    const types = Array.isArray(type) ? type : [type];
+
+                    if (
+                        types.some(name =>
+                            /NewsArticle|Article|ReportageNewsArticle/i.test(
+                                String(name || "")
+                            )
+                        )
+                    ) {
+                        return item;
+                    }
+                }
+            } catch {
+                // Bỏ qua JSON-LD không hợp lệ.
+            }
+        }
+
+        return null;
+    }
+
+    function getAuthor(doc, jsonLd) {
+        const jsonAuthor = jsonLd?.author;
+
+        if (typeof jsonAuthor === "string" && jsonAuthor.trim()) {
+            return cleanText(jsonAuthor);
+        }
+
+        if (Array.isArray(jsonAuthor)) {
+            const names = jsonAuthor
+                .map(item =>
+                    typeof item === "string" ? item : item?.name
+                )
+                .filter(Boolean);
+
+            if (names.length) return cleanText(names.join(", "));
+        }
+
+        if (jsonAuthor?.name) {
+            return cleanText(jsonAuthor.name);
+        }
+
+        const metaAuthor = getMeta(doc, [
+            'meta[name="author"]',
+            'meta[property="article:author"]',
+            'meta[name="parsely-author"]'
+        ]);
+
+        if (metaAuthor) return cleanText(metaAuthor);
+
+        const selectors = [
+            '[class*="author"] a',
+            '[class*="author"]',
+            '[rel="author"]',
+            'a[href*="/tac-gia/"]'
+        ];
+
+        for (const selector of selectors) {
+            const element = doc.querySelector(selector);
+            const text = cleanText(element?.textContent);
+
+            if (
+                text &&
+                text.length < 100 &&
+                !/tác giả|đăng ngày|cập nhật/i.test(text)
+            ) {
+                return text;
+            }
+        }
+
+        return "";
+    }
+
+    function getArticleContent(doc) {
+        const selectors = [
+            '[itemprop="articleBody"]',
+            '.singular-content',
+            '.article-content',
+            '.detail-content',
+            '.content-detail',
+            'article'
+        ];
+
+        let container = null;
+
+        for (const selector of selectors) {
+            const element = doc.querySelector(selector);
+
+            if (element && element.textContent.trim().length > 150) {
+                container = element;
+                break;
+            }
+        }
+
+        if (!container) return "";
+
+        const clone = container.cloneNode(true);
+
+        clone.querySelectorAll(
+            "script, style, iframe, form, button, nav, " +
+            "figure, picture, video, audio, svg, noscript"
+        ).forEach(element => element.remove());
+
+        clone.querySelectorAll(
+            '[class*="related"], [class*="recommend"], ' +
+            '[class*="social"], [class*="advert"], ' +
+            '[class*="comment"], [class*="share"]'
+        ).forEach(element => element.remove());
+
+        const paragraphs = Array.from(
+            clone.querySelectorAll("p, h2, h3, blockquote, li")
+        );
+
+        let lines = paragraphs
+            .map(element => cleanText(element.textContent))
+            .filter(text => {
+                if (text.length < 20) return false;
+
+                if (
+                    /^(ảnh|photo|chú thích ảnh|nguồn ảnh)\s*:/i.test(text)
+                ) {
+                    return false;
+                }
+
+                if (/^(xem thêm|đọc thêm|theo dõi dân trí)/i.test(text)) {
+                    return false;
+                }
+
+                return true;
+            });
+
+        if (!lines.length) {
+            lines = clone.innerText
+                .split(/\n+/)
+                .map(cleanText)
+                .filter(text => text.length >= 20);
+        }
+
+        return [...new Set(lines)].join("\n\n");
+    }
+
+    function parseDantriDom(html, url) {
+        if (!html || typeof html !== "string") return null;
+
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        const info = getUrlInfo(url);
+        const jsonLd = getJsonLd(doc);
+
+        const title =
+            getMeta(doc, [
+                'meta[property="og:title"]',
+                'meta[name="twitter:title"]'
+            ]) ||
+            jsonLd?.headline ||
+            doc.querySelector("h1")?.textContent ||
+            doc.title ||
+            titleFromSlug(info.slug);
+
+        const excerpt =
+            getMeta(doc, [
+                'meta[property="og:description"]',
+                'meta[name="description"]',
+                'meta[name="twitter:description"]'
+            ]) ||
+            jsonLd?.description ||
+            doc.querySelector(
+                '[class*="sapo"], [class*="summary"], [itemprop="description"]'
+            )?.textContent ||
+            "";
+
+        let image =
+            getMeta(doc, [
+                'meta[property="og:image"]',
+                'meta[name="twitter:image"]'
+            ]) ||
+            jsonLd?.image?.url ||
+            (typeof jsonLd?.image === "string" ? jsonLd.image : "");
+
+        if (Array.isArray(jsonLd?.image)) {
+            image = jsonLd.image[0]?.url || jsonLd.image[0] || image;
+        }
+
+        image = cleanImageUrl(image, url);
+
+        const publishedAt = normalizeDate(
+            getMeta(doc, [
+                'meta[property="article:published_time"]',
+                'meta[name="pubdate"]',
+                'meta[name="publishdate"]',
+                'meta[itemprop="datePublished"]',
+                'time[datetime]'
+            ]) ||
+            jsonLd?.datePublished ||
+            jsonLd?.dateModified ||
+            ""
+        );
+
+        const author = getAuthor(doc, jsonLd);
+        const content = getArticleContent(doc);
+
+        const cleanTitle = cleanText(title)
+            .replace(/^title:\s*/i, "");
+
+        if (!cleanTitle || !content) {
+            return null;
+        }
+
+        return {
+            id: `dtri-${info.slug || Date.now()}`,
+            title: cleanTitle,
+            slug: info.slug,
+            excerpt: cleanText(excerpt),
+            content,
+            thumbnail: image || DEFAULT_IMAGE,
+            image: image || DEFAULT_IMAGE,
+            author,
+            category: info.category,
+            categoryId: info.categorySlug,
+            publishedAt,
+            source: "dantri.com.vn",
+            url: info.url
+        };
+    }
+
+    function isValidArticle(article) {
+        return Boolean(
+            article &&
+            article.title &&
+            article.content &&
+            article.content.length > 30
+        );
+    }
+
+    async function fetchWithTimeout(url, timeout = 15000) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeout);
+
+        try {
+            const response = await fetch(url, {
+                signal: controller.signal
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            return await response.text();
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
+    async function getArticle(url, manualHtml = "") {
+        if (manualHtml) {
+            const article = parseDantriDom(manualHtml, url);
+            return isValidArticle(article) ? article : null;
+        }
+
+        const info = getUrlInfo(url);
+
+        // Thử lấy HTML trực tiếp trước.
+        try {
+            const html = await fetchWithTimeout(url);
+
+            const article = parseDantriDom(html, url);
+
+            if (isValidArticle(article)) return article;
+        } catch (error) {
+            console.warn("Không lấy được HTML trực tiếp:", error.message);
+        }
+
+        // Dùng Jina Reader làm phương án dự phòng.
+        try {
+            const readerUrl =
+                "https://r.jina.ai/" + info.url;
+
+            const markdown = await fetchWithTimeout(readerUrl, 20000);
+            const article = parseJinaMarkdown(markdown, info.url);
+
+            if (isValidArticle(article)) return article;
+        } catch (error) {
+            console.warn("Không lấy được nội dung qua Reader:", error.message);
+        }
+
+        return null;
+    }
+
+    function parseJinaMarkdown(markdown, url) {
+        if (!markdown) return null;
+
+        const info = getUrlInfo(url);
+        const lines = markdown
+            .replace(/\r/g, "")
+            .split("\n")
+            .map(line => line.trim());
+
+        function getMetadata(label) {
+            const regex = new RegExp(
+                "^" + label + "\\s*:\\s*(.+)$",
+                "i"
+            );
+
+            const line = lines.find(item => regex.test(item));
+            return line ? line.match(regex)?.[1]?.trim() || "" : "";
+        }
+
+        let title =
+            getMetadata("Title") ||
+            titleFromSlug(info.slug);
+
+        title = title
+            .replace(/^\[|\]$/g, "")
+            .replace(/\s*\|\s*Báo Dân trí.*$/i, "")
+            .trim();
+
+        const imageMatch = markdown.match(
+            /!\[[^\]]*\]\((https?:\/\/[^)\s]+)(?:\s+"[^"]*")?\)/
+        );
+
+        const image = imageMatch ? imageMatch[1] : "";
+
+        const authorMatch =
+            markdown.match(/(?:Tác giả|Author)\s*:\s*([^\n]+)/i) ||
+            markdown.match(/\[([^\]]+)\]\(https?:\/\/[^)]*\/tac-gia\/[^)]*\)/i);
+
+        const author = authorMatch ? cleanText(authorMatch[1]) : "";
+
+        const date =
+            getMetadata("Published Time") ||
+            getMetadata("Date") ||
+            getMetadata("Published");
+
+        const bodyStart = lines.findIndex(line =>
+            /^\(Dân trí\)|^Dân trí\s*[-–—]/i.test(line)
+        );
+
+        let contentLines = lines.slice(bodyStart >= 0 ? bodyStart : 0);
+
+        contentLines = contentLines.filter(line => {
+            if (!line) return false;
+            if (/^(Title|URL Source|Published Time|Markdown Content)\s*:/i.test(line)) {
+                return false;
+            }
+            if (/^!\[/.test(line)) return false;
+            if (/^https?:\/\/\S+$/.test(line)) return false;
+            if (/^#{1,6}\s/.test(line) && line.length < 15) return false;
+            return true;
+        });
+
+        const content = contentLines
+            .map(line => line
+                .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+                .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, "$1")
+                .replace(/^#{1,6}\s*/, "")
+                .trim()
+            )
+            .filter(line => line.length > 20)
             .join("\n\n");
 
-        if (candidate.length > contentText.length) {
-            contentText = candidate;
-        }
+        const excerptLine = contentLines.find(line =>
+            line.length > 40 && line.length < 500
+        ) || "";
 
-        if (contentText.length > 500) break;
+        const excerpt = excerptLine
+            .replace(/^\(Dân trí\)\s*[-–—]\s*/i, "")
+            .replace(/^Dân trí\s*[-–—]\s*/i, "");
+
+        const article = {
+            id: `dtri-${info.slug || Date.now()}`,
+            title: cleanText(title),
+            slug: info.slug,
+            excerpt: cleanText(excerpt),
+            content,
+            thumbnail: cleanImageUrl(image, url) || DEFAULT_IMAGE,
+            image: cleanImageUrl(image, url) || DEFAULT_IMAGE,
+            author,
+            category: info.category,
+            categoryId: info.categorySlug,
+            publishedAt: normalizeDate(date),
+            source: "dantri.com.vn",
+            url: info.url
+        };
+
+        return article;
     }
 
-    if (contentText.length < 150) {
-        const articleElement = doc.querySelector("article");
-
-        if (articleElement) {
-            const clone = articleElement.cloneNode(true);
-
-            clone.querySelectorAll(
-                "script, style, iframe, nav, header, footer, button, form, " +
-                "figure figcaption, [class*='related'], [class*='comment'], " +
-                "[class*='advert'], [class*='banner']"
-            ).forEach(node => node.remove());
-
-            contentText = Array.from(
-                clone.querySelectorAll("p, h2, h3, h4, blockquote")
-            )
-                .map(node => cleanText(node.textContent))
-                .filter(text => text.length >= 2)
-                .join("\n\n");
-        }
-    }
-
-    let author =
-        getMeta('meta[name="author"]') ||
-        getMeta('meta[property="article:author"]') ||
-        jsonAuthorName ||
-        getText("#articleContent [rel='author']") ||
-        getText("[rel='author']") ||
-        getText(".author-name") ||
-        getText(".singular-author") ||
-        getText(".e-magazine__author") ||
-        getText("[itemprop='author']");
-
-    if (!author) {
-        const authorLink = doc.querySelector('a[href*="/tac-gia/"]');
-        if (authorLink) {
-            author = cleanText(authorLink.textContent);
-        }
-    }
-
-    const category =
-        getText("ul.breadcrumbs li:last-child a") ||
-        getText(".breadcrumbs a:last-child") ||
-        info.categoryInfo.title;
-
-    let publishedAt =
-        getMeta('meta[property="article:published_time"]') ||
-        getMeta('meta[name="pubdate"]') ||
-        getMeta('meta[name="publishdate"]') ||
-        getMeta('meta[itemprop="datePublished"]') ||
-        articleData.datePublished ||
-        doc.querySelector('[itemprop="datePublished"]')?.getAttribute("content") ||
-        "";
-
-    if (!normalizeDate(publishedAt)) {
-        const timeElements = Array.from(doc.querySelectorAll("time"));
-        const timeElement = timeElements.find(element =>
-            Boolean(normalizeDate(
-                element.getAttribute("datetime") ||
-                element.textContent
-            ))
-        );
-
-        if (timeElement) {
-            publishedAt =
-                timeElement.getAttribute("datetime") ||
-                timeElement.textContent;
-        }
-    }
-
-    if (!normalizeDate(publishedAt)) {
-        publishedAt =
-            getText(".singular-time") ||
-            getText(".author-time") ||
-            getMeta('meta[name="date"]') ||
-            getMeta('meta[property="article:modified_time"]') ||
-            "";
-    }
-
-    const imageCandidates = [
-        getMeta('meta[property="og:image"]'),
-        getMeta('meta[property="og:image:secure_url"]'),
-        getMeta('meta[name="twitter:image"]'),
-        getMeta('meta[name="twitter:image:src"]'),
-        typeof articleData.image === "string" ? articleData.image : "",
-        articleData.image?.url || ""
-    ];
-
-    const articleImageSelectors = [
-        "#articleContent figure img",
-        "#articleContent .singular-content img",
-        "#articleContent [data-slot='content'] img",
-        "article .singular-content img",
-        "article figure img",
-        "[itemprop='articleBody'] img"
-    ];
-
-    for (const selector of articleImageSelectors) {
-        const elements = Array.from(doc.querySelectorAll(selector));
-        for (const element of elements) {
-            imageCandidates.push(getImgSrcFromElement(element));
-        }
-    }
-
-    const image = chooseArticleImage(imageCandidates, url);
-
-    return buildArticle({
-        url,
-        title,
-        excerpt,
-        content: contentText,
-        author,
-        category,
-        publishedAt,
-        image
-    });
-}
-
-// ======================================================
-// 7. PHÂN TÍCH JINA MARKDOWN
-// ======================================================
-
-function parseJinaMarkdown(markdown, url) {
-    const info = getUrlInfo(url);
-
-    const rawText = String(markdown || "")
-        .replace(/\r/g, "")
-        .replace(/<!--[\s\S]*?-->/g, "");
-
-    const lines = rawText.split("\n").map(line => line.trim());
-
-    let title = "";
-    let image = "";
-    let publishedAt = "";
-    let author = "";
-    let excerpt = "";
-    const category = info.categoryInfo.title;
-
-    for (const line of lines) {
-        if (!title && /^Title:\s*/i.test(line)) {
-            title = cleanTitle(line.replace(/^Title:\s*/i, ""));
-        }
-
-        if (!publishedAt && /^Published Time:\s*/i.test(line)) {
-            publishedAt = line.replace(/^Published Time:\s*/i, "").trim();
-        }
-
-        if (!image && /^og:image:\s*/i.test(line)) {
-            image = line.replace(/^og:image:\s*/i, "").trim();
-        }
-    }
-
-    let titleIndex = lines.findIndex(line => {
-        const text = cleanTitle(
-            line.replace(/^#{1,6}\s+/, "").replace(/\*\*/g, "")
-        );
-        return title && text.toLowerCase() === title.toLowerCase();
-    });
-
-    if (titleIndex < 0) {
-        titleIndex = lines.findIndex(line => /^#\s+/.test(line));
-        if (titleIndex >= 0) {
-            title = cleanTitle(lines[titleIndex].replace(/^#\s+/, ""));
-        }
-    }
-
-    if (!title) title = titleFromSlug(info.slug);
-    if (titleIndex < 0) titleIndex = 0;
-
-    const authorMatch = rawText.match(
-        /\[([^\]]{2,60})\]\(https?:\/\/(?:www\.)?dantri\.com\.vn\/tac-gia\/[^)]+\)/i
-    );
-
-    if (authorMatch) {
-        author = cleanText(authorMatch[1]);
-    }
-
-    if (!author) {
-        const authorLine = lines
-            .slice(titleIndex + 1, titleIndex + 30)
-            .find(line => /^(tác giả|by)\s*:/i.test(line));
-
-        if (authorLine) {
-            author = authorLine.replace(/^(tác giả|by)\s*:/i, "").trim();
-        }
-    }
-
-    if (!normalizeDate(publishedAt)) {
-        const dateLine = lines.find(line =>
-            Boolean(normalizeDate(line)) &&
-            (
-                /^\d{4}-\d{2}-\d{2}/.test(line) ||
-                /^\d{1,2}\/\d{1,2}\/\d{4}/.test(line)
-            )
-        );
-
-        if (dateLine) publishedAt = dateLine;
-    }
-
-    const bodyCandidates = lines.slice(titleIndex + 1);
-
-    const isMetadataOrImage = line => {
-        const text = line.trim();
-        return (
-            !text ||
-            /^(Title|URL Source|Published Time|Markdown Content):/i.test(text) ||
-            /^!\[/.test(text) \vert{}\vert{} /^https?:\/\//i.test(text) \vert{}\vert{} /^\[[^\]]*\]\(https?:\/\//.test(text)
-        );
-    };
-
-    const sapoIndex = bodyCandidates.findIndex(line => {
-        const text = line
-            .replace(/^#{1,6}\s+/, "")
-            .replace(/\*\*/g, "")
-            .trim();
-
-        return (
-            /^\(Dân trí\)\s*[-–]/i.test(text) ||
-            /^Dân trí\s*[-–:]/i.test(text)
-        );
-    });
-
-    let bodyLines = [];
-
-    if (sapoIndex >= 0) {
-        excerpt = bodyCandidates[sapoIndex]
-            .replace(/^#{1,6}\s+/, "")
-            .replace(/\*\*/g, "")
-            .trim();
-
-        bodyLines = bodyCandidates.slice(sapoIndex + 1);
-    } else {
-        const firstParagraphIndex = bodyCandidates.findIndex(line => {
-            const text = line
-                .replace(/^#{1,6}\s+/, "")
-                .replace(/\*\*/g, "")
-                .trim();
-
-            return (
-                !isMetadataOrImage(text) &&
-                text.length >= 80 &&
-                !/^(tác giả|by)\s*:/i.test(text) &&
-                !/^(ảnh|photo|caption|chú thích ảnh)\s*:/i.test(text) &&
-                !/^\d{1,2}\/\d{1,2}\/\d{4}/.test(text)
-            );
-        });
-
-        if (firstParagraphIndex >= 0) {
-            excerpt = bodyCandidates[firstParagraphIndex]
-                .replace(/^#{1,6}\s+/, "")
-                .replace(/\*\*/g, "")
-                .trim();
-
-            bodyLines = bodyCandidates.slice(firstParagraphIndex);
-        } else {
-            bodyLines = bodyCandidates;
-        }
-    }
-
-    const stopPatterns = [
-        /^thêm dân trí trên google/i,
-        /^không bỏ lỡ tin mới/i,
-        /^hướng dẫn:/i,
-        /^bình luận\s*\(/i,
-        /^đọc nhiều trong\b/i,
-        /^sponsored links$/i,
-        /^promoted links$/i,
-        /^you may like$/i,
-        /^you may also like$/i,
-        /^related articles$/i,
-        /^bài liên quan/i,
-        /^tin liên quan/i,
-        /^tags?:$/i,
-        /^by taboola$/i,
-        /^©\s*2005-/i,
-        /^cơ quan của bộ nội vụ/i,
-        /^tổng biên tập:/i,
-        /^giấy phép hoạt động/i,
-        /^liên hệ quảng cáo/i
-    ];
-
-    const cleanedLines = [];
-
-    for (const line of bodyLines) {
-        const plain = line
-            .replace(/^#{1,6}\s+/, "")
-            .replace(/\*\*/g, "")
-            .trim();
-
-        if (!plain) {
-            cleanedLines.push("");
-            continue;
-        }
-
-        if (stopPatterns.some(pattern => pattern.test(plain))) {
-            break;
-        }
-
-        if (/^(Title|URL Source|Published Time|Markdown Content):/i.test(plain)) {
-            continue;
-        }
-
-        if (/^https?:\/\/\S+$/i.test(plain)) continue;
-        if (/^!\[[^\]]*\]\([^)]*\)$/.test(plain)) continue;
-        if (/^\[[^\]]*\]\(https?:\/\/[^)]+\)$/.test(plain)) continue;
-        if (/^(tác giả|by)\s*:/i.test(plain)) continue;
-        if (/^(ảnh|photo|caption|chú thích ảnh)\s*:/i.test(plain)) continue;
-
-        if (/^\d{1,2}\/\d{1,2}\/\d{4}\s*[-–,]?\s*\d{1,2}:\d{2}$/.test(plain)) {
-            continue;
-        }
-
-        cleanedLines.push(line);
-    }
-
-    const content = normalizeContent(cleanedLines.join("\n"));
-
-    const imageCandidates = [];
-    if (image) imageCandidates.push(image);
-
-    const markdownImageRegex =
-        /!\[[^\]]*\]\((https?:\/\/[^)\s]+)(?:\s+["'][^)]*["'])?\)/gi;
-
-    let match;
-    while ((match = markdownImageRegex.exec(rawText)) !== null) {
-        imageCandidates.push(match[1]);
-    }
-
-    const cdnImageRegex =
-        /https?:\/\/cdnphoto\.dantri\.com\.vn\/[^\s)"'<>]+/gi;
-
-    while ((match = cdnImageRegex.exec(rawText)) !== null) {
-        imageCandidates.push(match[0]);
-    }
-
-    image = chooseArticleImage(imageCandidates, url);
-
-    return buildArticle({
-        url,
-        title,
-        excerpt,
-        content,
-        author,
-        category,
-        publishedAt,
-        image
-    });
-}
-
-// ======================================================
-// 8. TẢI DỮ LIỆU CÀO SONG SONG CỰC NHANH (1-2 GIÂY)
-// ======================================================
-
-function isBlockedResponse(text) {
-    if (!text || text.length < 300) return true;
-
-    const lower = text.toLowerCase();
-
-    return (
-        lower.includes("just a moment...") ||
-        lower.includes("attention required!") ||
-        lower.includes("access denied") ||
-        lower.includes("enable javascript and cookies") ||
-        lower.includes("verify you are human")
-    );
-}
-
-async function fetchWithTimeout(url, timeout = 7000) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeout);
-
-    try {
-        const response = await fetch(url, {
-            signal: controller.signal,
-            cache: "no-store"
-        });
-
-        if (!response.ok) {
-            throw new Error("HTTP " + response.status);
-        }
-
-        return await response.text();
-    } finally {
-        clearTimeout(timer);
-    }
-}
-
-async function fetchHtmlWithMultiProxy(url) {
-    const encodedUrl = encodeURIComponent(url);
-
-    // Kích hoạt 3 Proxy chạy song song - Proxy nào phản hồi trước tiên sẽ lấy luôn
-    const proxyFetchers = [
-        async () => {
-            const text = await fetchWithTimeout("https://r.jina.ai/" + url, 7000);
-            if (isBlockedResponse(text) || !/(Title:|Markdown Content:|# )/i.test(text)) {
-                throw new Error("Jina không phản hồi hợp lệ");
-            }
-            return { type: "markdown", content: text };
-        },
-        async () => {
-            const text = await fetchWithTimeout("https://api.allorigins.win/raw?url=" + encodedUrl, 6000);
-            if (isBlockedResponse(text) || !/<html|<article|<h1/i.test(text)) {
-                throw new Error("AllOrigins không phản hồi hợp lệ");
-            }
-            return { type: "html", content: text };
-        },
-        async () => {
-            const text = await fetchWithTimeout("https://api.codetabs.com/v1/proxy?quest=" + encodedUrl, 6000);
-            if (isBlockedResponse(text) || !/<html|<article|<h1/i.test(text)) {
-                throw new Error("CodeTabs không phản hồi hợp lệ");
-            }
-            return { type: "html", content: text };
-        }
-    ];
-
-    try {
-        return await Promise.any(proxyFetchers.map(fn => fn()));
-    } catch (e) {
-        return null;
-    }
-}
-
-// ======================================================
-// 9. HÀM CRAWL CHÍNH
-// ======================================================
-
-async function getArticle(url, manualHtml = "") {
-    let parsedUrl;
-
-    try {
-        parsedUrl = new URL(String(url || "").trim());
-    } catch {
-        alert("URL không hợp lệ. Hãy nhập đường dẫn bài báo Dân Trí.");
-        return null;
-    }
-
-    if (
-        !["http:", "https:"].includes(parsedUrl.protocol) ||
-        !(
-            parsedUrl.hostname === "dantri.com.vn" ||
-            parsedUrl.hostname.endsWith(".dantri.com.vn")
-        )
-    ) {
-        alert("Chỉ hỗ trợ URL thuộc dantri.com.vn.");
-        return null;
-    }
-
-    const articleUrl = parsedUrl.href;
-
-    if (
-        typeof manualHtml === "string" &&
-        manualHtml.trim().length > 300
-    ) {
-        try {
-            const manualResult = parseDantriDom(manualHtml, articleUrl);
-
-            if (isValidArticleContent(manualResult)) {
-                return manualResult;
-            }
-        } catch (error) {
-            console.warn("Không phân tích được HTML dự phòng:", error);
-        }
-    }
-
-    const response = await fetchHtmlWithMultiProxy(articleUrl);
-
-    if (!response) {
-        const accordion = document.querySelector('.fallback-accordion');
-        if (accordion) accordion.open = true;
-
-        alert(
-            "Không lấy được bài báo tự động. Proxy có thể bị chặn " +
-            "hoặc không phản hồi. Hãy dán mã nguồn HTML (Ctrl+U) vào ô dự phòng bên dưới!"
-        );
-
-        return null;
-    }
-
-    let article;
-
-    try {
-        article = response.type === "markdown"
-            ? parseJinaMarkdown(response.content, articleUrl)
-            : parseDantriDom(response.content, articleUrl);
-    } catch (error) {
-        console.error("Lỗi phân tích bài báo:", error);
-        alert("Có lỗi khi phân tích bài báo. Hãy thử lại.");
-        return null;
-    }
-
-    if (!isValidArticleContent(article)) {
-        alert(
-            "Đã tải được dữ liệu nhưng nội dung bài báo chưa đầy đủ. " +
-            "Hãy thử lại hoặc dùng HTML dự phòng!"
-        );
-
-        return null;
-    }
-
-    return article;
-}
+    // Đưa các hàm ra phạm vi toàn cục để main.js gọi được.
+    window.parseDantriDom = parseDantriDom;
+    window.parseJinaMarkdown = parseJinaMarkdown;
+    window.getArticle = getArticle;
+    window.normalizeCategoryId = normalizeCategoryId;
+
+})();
