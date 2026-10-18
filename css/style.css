@@ -1060,3 +1060,7 @@ footer #footerCategories li a:hover,
         grid-template-columns: 1fr;
     }
 }
+/* Ẩn riêng dòng Xem bài viết gốc */
+.article-source-link {
+    display: none !important;
+}
