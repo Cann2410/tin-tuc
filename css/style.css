@@ -1388,3 +1388,34 @@ footer .container {
         font-size: 17px;
     }
 }
+
+/* CHO DANH SÁCH CHUYÊN MỤC FOOTER NẰM NGANG */
+footer #footerCategories {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+footer #footerCategories li {
+    display: inline-flex;
+    margin: 0;
+    padding: 0;
+}
+
+footer #footerCategories li a {
+    display: inline-block;
+    padding: 5px 0;
+    white-space: nowrap;
+}
+
+/* Trên điện thoại vẫn tự xuống dòng khi hết chỗ */
+@media (max-width: 600px) {
+    footer #footerCategories {
+        gap: 6px 14px;
+    }
+}
