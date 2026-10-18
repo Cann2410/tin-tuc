@@ -69,6 +69,7 @@ header {
     cursor: pointer;
 }
 
+/* Menu chính */
 .nav-menu {
     display: flex;
     align-items: center;
@@ -100,7 +101,7 @@ header {
     line-height: 1.5;
     white-space: nowrap;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
 .nav-menu li a:hover,
@@ -109,36 +110,43 @@ header {
 }
 
 .nav-menu .btn-crawler {
+    margin-left: 4px;
     background: #ff9800 !important;
     color: #fff !important;
     font-weight: 750;
-    margin-left: 4px;
 }
 
 .nav-menu .btn-crawler:hover {
     background: #e88900 !important;
 }
 
-/* Danh mục cha có menu con */
+/* =========================================
+   2.1 MENU THẢ XUỐNG
+========================================= */
+
+/* Mục cha: Thế giới, Thời sự */
 .nav-menu > li.has-dropdown {
     position: relative;
 }
 
-/* Menu xổ xuống */
+/* Tạo khoảng đệm trong suốt phía trên menu con,
+   giúp rê chuột từ mục cha xuống menu con không bị mất hover */
 .nav-menu > li.has-dropdown > .dropdown-menu {
     display: none;
     position: absolute;
     top: 100%;
     left: 0;
     z-index: 10001;
-    min-width: 230px;
+    min-width: 245px;
+    max-width: 320px;
     padding: 6px 0;
     margin: 0;
     border: 1px solid #e0e0e0;
     border-radius: 5px;
-    background: #fff !important;
+    background: #fff;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
     list-style: none;
+    text-align: left;
 }
 
 /* Hiện menu con khi rê chuột hoặc dùng bàn phím */
@@ -147,26 +155,42 @@ header {
     display: block;
 }
 
-.nav-menu .dropdown-menu li {
+/* Từng dòng menu con */
+.nav-menu > li.has-dropdown > .dropdown-menu li {
     display: block;
     width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
-.nav-menu .dropdown-menu li a {
+/* Chữ trong menu con */
+.nav-menu > li.has-dropdown > .dropdown-menu li a {
     display: block;
     width: 100%;
-    padding: 9px 16px;
+    padding: 10px 16px;
     border-radius: 0;
-    color: #333 !important;
+    background: #fff;
+    color: #333;
     font-size: 14px;
     font-weight: 500;
     line-height: 1.5;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: break-word;
 }
 
-.nav-menu .dropdown-menu li a:hover {
-    background: #f0fdf4 !important;
-    color: #008837 !important;
+/* Hiệu ứng rê chuột vào mục con */
+.nav-menu > li.has-dropdown > .dropdown-menu li a:hover,
+.nav-menu > li.has-dropdown > .dropdown-menu li a:focus {
+    background: #f0fdf4;
+    color: #008837;
+}
+
+/* Đảm bảo menu con nằm trên nội dung bên dưới */
+header,
+.nav-wrapper,
+.nav-menu,
+.nav-menu > li.has-dropdown {
+    overflow: visible;
 }
 
 /* =========================================
