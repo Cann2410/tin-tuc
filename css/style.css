@@ -1113,3 +1113,166 @@ header,
         min-width: 210px;
     }
 }
+
+/* ===== SỬA BỐ CỤC FOOTER CHO CÂN ĐỐI ===== */
+
+footer {
+    width: 100%;
+    box-sizing: border-box;
+    background: #1b1e21;
+    color: #c5cbd1;
+    padding: 36px 0 0;
+    margin: 0;
+}
+
+footer .container {
+    width: min(1200px, 92%);
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 0.9fr 0.9fr 1.2fr;
+    gap: 36px;
+    align-items: start;
+    padding-bottom: 32px;
+}
+
+.footer-col {
+    min-width: 0;
+}
+
+.footer-col h4 {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 22px;
+}
+
+.footer-col p {
+    font-size: 15px;
+    line-height: 1.8;
+    margin: 0 0 10px;
+    overflow-wrap: anywhere;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-links li {
+    margin: 0 0 12px;
+}
+
+.footer-links a {
+    color: #c5cbd1;
+    text-decoration: none;
+    line-height: 1.6;
+    transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: #fff;
+}
+
+/* Các icon mạng xã hội nằm ngang */
+.social-icons {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.social-icons a,
+.social-icon-btn {
+    width: 46px;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #383b3e;
+    color: #fff;
+    text-decoration: none;
+    font-size: 20px;
+    transition: background 0.2s ease;
+}
+
+.social-icons a:hover,
+.social-icon-btn:hover {
+    background: #008837;
+}
+
+/* Phần bản quyền */
+.footer-bottom {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 16px 0;
+    border-top: 1px solid #383b3e;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.footer-bottom p {
+    margin: 0;
+}
+
+/* Màn hình vừa */
+@media (max-width: 900px) {
+    .footer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 30px;
+    }
+}
+
+/* Điện thoại */
+@media (max-width: 550px) {
+    footer {
+        padding-top: 28px;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 24px 18px;
+        padding-bottom: 24px;
+    }
+
+    .footer-col h4 {
+        font-size: 16px;
+        margin-bottom: 14px;
+    }
+
+    .footer-col p,
+    .footer-links a {
+        font-size: 14px;
+    }
+
+    .social-icons {
+        gap: 8px;
+    }
+
+    .social-icons a,
+    .social-icon-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .footer-bottom {
+        font-size: 12px;
+        padding: 14px 10px;
+    }
+}
+
+@media (max-width: 360px) {
+    .footer-grid {
+        grid-template-columns: 1fr;
+    }
+}
