@@ -1277,115 +1277,114 @@ footer .container {
     }
 }
 
-/* ===== THU NHỎ KHUNG BÀI VIẾT MỚI NHẤT ===== */
 
-/* Giới hạn chiều rộng nội dung */
-#featuredPosts,
-.featured-section,
-.featured-posts {
-    max-width: 1100px;
-    margin-left: auto;
-    margin-right: auto;
-}
+/* ===== CÂN ĐỐI KÍCH THƯỚC KHUNG TIN MỚI NHẤT ===== */
 
-/* Khung bài viết nổi bật */
-.featured-grid {
-    display: grid;
-    grid-template-columns: 1.35fr 1fr;
-    gap: 24px;
-    align-items: start;
-}
-
-/* Ảnh bài viết chính */
-.featured-main img,
-.featured-large img,
-.featured-post img {
+/* Giới hạn chiều rộng vùng tin nổi bật */
+#appView .featured-grid {
     width: 100%;
-    height: 390px;
-    object-fit: cover;
-    border-radius: 6px;
-    display: block;
+    max-width: 1100px;
+    margin: 0 auto 30px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 24px;
 }
 
-/* Khung bài viết bên phải */
-.featured-side {
+/* Khung bài viết không bị tràn */
+#appView .featured-grid > .card-clean,
+#appView .featured-grid > .featured-small-group {
+    min-width: 0;
+    width: 100%;
+}
+
+/* Ảnh bài viết lớn bên trái */
+#appView .featured-grid .card-img-large {
+    width: 100%;
+    height: 340px;
+    aspect-ratio: auto;
+    object-fit: cover;
+    display: block;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+/* Nhóm bài viết bên phải */
+#appView .featured-grid .featured-small-group {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 22px;
 }
 
-/* Ảnh bài viết bên phải */
-.featured-side img {
+/* Ảnh bài viết nhỏ bên phải */
+#appView .featured-grid .card-img-small {
     width: 100%;
-    height: 210px;
+    height: 190px;
+    aspect-ratio: auto;
     object-fit: cover;
-    border-radius: 6px;
     display: block;
+    border-radius: 6px;
+    margin-bottom: 8px;
 }
 
-/* Tiêu đề bài viết */
-.featured-grid h2,
-.featured-grid h3 {
-    font-size: 20px;
-    line-height: 1.45;
-    margin: 10px 0 6px;
+/* Cỡ chữ cân đối */
+#appView .featured-grid .card-title-large-green {
+    font-size: 25px;
+    line-height: 1.4;
 }
 
-/* Ngày đăng */
-.featured-grid .post-date,
-.featured-grid .post-time {
-    font-size: 13px;
-    color: #888;
+#appView .featured-grid .card-title-small-clean {
+    font-size: 18px;
+    line-height: 1.4;
 }
 
-/* Màn hình vừa */
+/* Tablet */
 @media (max-width: 900px) {
-    .featured-grid {
-        grid-template-columns: 1.2fr 1fr;
-        gap: 16px;
+    #appView .featured-grid {
+        max-width: 100%;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+        gap: 18px;
     }
 
-    .featured-main img,
-    .featured-large img,
-    .featured-post img {
-        height: 300px;
+    #appView .featured-grid .card-img-large {
+        height: 280px;
     }
 
-    .featured-side img {
-        height: 170px;
+    #appView .featured-grid .card-img-small {
+        height: 155px;
     }
 
-    .featured-grid h2,
-    .featured-grid h3 {
-        font-size: 17px;
+    #appView .featured-grid .card-title-large-green {
+        font-size: 22px;
+    }
+
+    #appView .featured-grid .card-title-small-clean {
+        font-size: 16px;
     }
 }
 
 /* Điện thoại */
 @media (max-width: 600px) {
-    #featuredPosts,
-    .featured-section,
-    .featured-posts {
-        width: 92%;
+    #appView .featured-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 22px;
     }
 
-    .featured-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
+    #appView .featured-grid .card-img-large {
+        height: auto;
+        aspect-ratio: 16 / 10;
     }
 
-    .featured-main img,
-    .featured-large img,
-    .featured-post img {
-        height: 230px;
+    #appView .featured-grid .card-img-small {
+        height: auto;
+        aspect-ratio: 16 / 9;
     }
 
-    .featured-side img {
-        height: 200px;
+    #appView .featured-grid .card-title-large-green {
+        font-size: 21px;
     }
 
-    .featured-grid h2,
-    .featured-grid h3 {
+    #appView .featured-grid .card-title-small-clean {
         font-size: 17px;
     }
 }
