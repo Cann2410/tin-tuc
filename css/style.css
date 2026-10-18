@@ -227,55 +227,140 @@ footer { background: #1b1e21; color: #aaa; padding: 40px 0 20px 0; margin-top: 5
     .list-item-img { width: 100%; height: 200px; }
 }
 
-/* FIX: giới hạn kích thước ảnh tin tức */
+/* ===== GIAO DIỆN TRANG CHỦ TIN TỨC ===== */
+
 .featured-grid {
     display: grid;
-    grid-template-columns: 1.8fr 1.2fr;
+    grid-template-columns: 2fr 1fr;
     gap: 25px;
     align-items: start;
+    margin-bottom: 30px;
 }
 
 .featured-grid .card-clean {
     min-width: 0;
-    overflow: hidden;
+    cursor: pointer;
+    background: transparent;
 }
 
-.featured-grid .card-img-large,
+/* Ảnh bài viết lớn bên trái */
+.featured-grid .card-img-large {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 5px;
+    margin-bottom: 6px;
+}
+
+/* Cột hai bài viết nhỏ bên phải */
+.featured-small-group {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    min-width: 0;
+}
+
+/* Ảnh tin nhỏ */
 .featured-grid .card-img-small {
     display: block;
     width: 100%;
-    height: 240px;
-    max-width: 100%;
-    aspect-ratio: auto;
+    height: auto;
+    aspect-ratio: 16 / 9;
     object-fit: cover;
     object-position: center;
-    border-radius: 8px;
+    border-radius: 5px;
+    margin-bottom: 8px;
 }
 
-/* Ảnh không được vượt khỏi khung */
-.card-clean img {
+/* Tên chuyên mục của tin lớn */
+.card-category-green {
+    font-size: 14px;
+    font-weight: 800;
+    color: #008837;
+    text-transform: uppercase;
+    line-height: 1.4;
+    margin-bottom: 14px;
+}
+
+/* Tiêu đề bài lớn */
+.card-title-large-green {
+    font-size: 30px;
+    font-weight: 750;
+    color: #008837;
+    line-height: 1.4;
+    margin-bottom: 10px;
+}
+
+/* Mô tả bài lớn */
+.card-excerpt-clean {
+    font-size: 16px;
+    color: #555;
+    line-height: 1.55;
+}
+
+/* Tiêu đề bài nhỏ */
+.card-title-small-clean {
+    font-size: 20px;
+    font-weight: 750;
+    color: #111;
+    line-height: 1.4;
+    margin-bottom: 5px;
+}
+
+/* Ngày đăng bài nhỏ */
+.card-time-clean {
+    font-size: 14px;
+    color: #777;
+    line-height: 1.5;
+}
+
+/* Hiệu ứng khi rê chuột */
+.featured-grid .card-clean:hover .card-title-large-green,
+.featured-grid .card-clean:hover .card-title-small-clean {
+    color: #008837;
+}
+
+/* Đảm bảo ảnh không tràn khỏi khung */
+.featured-grid img {
     max-width: 100%;
 }
 
-/* Ảnh trong danh sách tin */
-.list-item-img {
-    width: 200px;
-    height: 125px;
-    max-width: 100%;
-    object-fit: cover;
-    object-position: center;
-    flex-shrink: 0;
-}
-
-/* Giao diện điện thoại */
+/* Máy tính bảng */
 @media (max-width: 992px) {
     .featured-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 18px;
     }
 
-    .featured-grid .card-img-large,
-    .featured-grid .card-img-small {
-        height: auto;
-        aspect-ratio: 16 / 9;
+    .card-title-large-green {
+        font-size: 25px;
+    }
+
+    .card-title-small-clean {
+        font-size: 17px;
     }
 }
+
+/* Điện thoại: chuyển thành một cột */
+@media (max-width: 600px) {
+    .featured-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .featured-small-group {
+        gap: 22px;
+    }
+
+    .card-title-large-green {
+        font-size: 24px;
+    }
+
+    .card-title-small-clean {
+        font-size: 18px;
+    }
+}
+
