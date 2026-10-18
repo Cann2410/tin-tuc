@@ -1,4 +1,3 @@
-
 /* =========================================
    1. THIẾT LẬP CHUNG
 ========================================= */
@@ -404,6 +403,7 @@ main {
         font-size: 17px;
     }
 }
+
 /* =========================================
    6. DANH SÁCH BÀI VIẾT
 ========================================= */
@@ -778,28 +778,40 @@ footer .container {
     color: #fff;
 }
 
-/* Chuyên mục footer nằm ngang, tự xuống dòng khi hết chỗ */
-footer #footerCategories {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 16px;
-    padding: 0;
-    margin: 0;
-    list-style: none;
+/* CHUYÊN MỤC FOOTER CHIA 2 CỘT THẲNG HÀNG CHUẨN */
+footer #footerCategories,
+#footerCategories {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px 28px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    list-style: none !important;
 }
 
-footer #footerCategories li {
-    display: inline-flex;
-    margin: 0;
-    padding: 0;
+footer #footerCategories li,
+#footerCategories li {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
 }
 
-footer #footerCategories li a {
-    display: inline-block;
-    padding: 3px 0;
-    white-space: nowrap;
+footer #footerCategories li a,
+#footerCategories li a {
+    display: inline-block !important;
+    color: #c5cbd1 !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    line-height: 1.5 !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    transition: color 0.2s ease;
+}
+
+footer #footerCategories li a:hover,
+#footerCategories li a:hover {
+    color: #008837 !important;
 }
 
 /* Icon mạng xã hội */
@@ -913,7 +925,6 @@ footer #footerCategories li a {
         font-size: 22px;
     }
 
-    /* Menu vẫn xếp ngang, vuốt sang trái/phải nếu thiếu chỗ */
     .nav-menu {
         display: flex;
         flex-wrap: nowrap;
@@ -935,8 +946,6 @@ footer #footerCategories li a {
         font-size: 13px;
     }
 
-    /* Dropdown trên điện thoại vẫn mở khi nhấn/được focus;
-       nếu JavaScript đang điều khiển dropdown, không cản trở */
     .nav-menu > li.has-dropdown > .dropdown-menu {
         min-width: 210px;
         max-width: min(280px, 90vw);
@@ -951,7 +960,6 @@ footer #footerCategories li a {
         font-size: 22px;
     }
 
-    /* Bài nổi bật: xếp dọc trên điện thoại */
     #appView .featured-grid {
         grid-template-columns: minmax(0, 1fr);
         gap: 24px;
@@ -1041,8 +1049,9 @@ footer #footerCategories li a {
         font-size: 14px;
     }
 
-    footer #footerCategories {
-        gap: 6px 12px;
+    footer #footerCategories,
+    #footerCategories {
+        gap: 10px 16px !important;
     }
 
     .ls-item {
