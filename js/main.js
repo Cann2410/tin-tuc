@@ -4,11 +4,19 @@
 ========================================= */
 
 const DEFAULT_MENU = [
-    { id: "home", title: "Trang chủ", type: "home" },
+    { id: "home", title: "Home", type: "home" },
+    { id: "moi-nhat", title: "Mới nhất", type: "category" },
+    { id: "the-gioi", title: "Thế giới", type: "category" },
     { id: "Thời sự", title: "Thời sự", type: "category" },
-    { id: "Thế giới", title: "Thế giới", type: "category" },
+    { id: "Pháp luật", title: "Pháp luật", type: "category" },
+    { id: "Sức khỏe", title: "Sức khỏe", type: "category" },
+    { id: "Đời sống", title: "Đời sống", type: "category" },
+    { id: "Du lịch", title: "Du lịch", type: "category" },
+    { id: "Kinh doanh", title: "Kinh doanh", type: "category" },
+    { id: "Thể thao", title: "Thể thao", type: "category" },
     { id: "Bất động sản", title: "Bất động sản", type: "category" },
-    { id: "Thể thao", title: "Thể thao", type: "category" }
+    { id: "Giải trí", title: "Giải trí", type: "category" },
+    { id: "Giáo dục", title: "Giáo dục", type: "category" }
 ];
 
 const DEFAULT_POSTS = [
