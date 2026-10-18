@@ -86,18 +86,48 @@ function makeClickArg(value) {
     return encodeURIComponent(String(value ?? ""));
 }
 
-// Chuyển đổi định dạng ngày giờ dạng chuỗi (kể cả dạng DD/MM/YYYY HH:MM) sang số milisecond
+// Hàm tự động đọc URL Dân Trí để lấy đúng Chuyên mục (Pháp luật, Kinh doanh, Sức khỏe...)
+function detectCategoryFromUrl(url) {
+    if (!url) return null;
+    try {
+        const parsed = new URL(url);
+        const pathSegments = parsed.pathname.split('/').filter(Boolean);
+        if (pathSegments.length > 0) {
+            const categorySlug = normalizeCategoryId(pathSegments[0]);
+            
+            const categoryMap = {
+                "the-gioi": { category: "Thế giới", categoryId: "the-gioi" },
+                "thoi-su": { category: "Thời sự", categoryId: "thoi-su" },
+                "phap-luat": { category: "Pháp luật", categoryId: "phap-luat" },
+                "suc-khoe": { category: "Sức khỏe", categoryId: "suc-khoe" },
+                "doi-song": { category: "Đời sống", categoryId: "doi-song" },
+                "du-lich": { category: "Du lịch", categoryId: "du-lich" },
+                "kinh-doanh": { category: "Kinh doanh", categoryId: "kinh-doanh" },
+                "the-thao": { category: "Thể thao", categoryId: "the-thao" },
+                "bat-dong-san": { category: "Bất động sản", categoryId: "bat-dong-san" },
+                "giai-tri": { category: "Giải trí", categoryId: "giai-tri" },
+                "giao-duc": { category: "Giáo dục", categoryId: "giao-duc" }
+            };
+
+            if (categoryMap[categorySlug]) {
+                return categoryMap[categorySlug];
+            }
+        }
+    } catch (e) {
+        console.warn("Không phân tích được URL:", e);
+    }
+    return null;
+}
+
 function parseDateToTime(value) {
     if (!value) return 0;
     const str = String(value).trim();
 
-    // 1. Thử ISO YYYY-MM-DD
     const isoDate = new Date(str.replace(" ", "T"));
     if (!Number.isNaN(isoDate.getTime())) {
         return isoDate.getTime();
     }
 
-    // 2. Thử định dạng Việt Nam (19:21 18/10/2026 hoặc 18/10/2026 19:21)
     const match = str.match(/(?:(\d{1,2}):(\d{1,2})\s+)?(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s*[-–—]?\s*(\d{1,2}):(\d{1,2}))?/);
     if (match) {
         const hours = parseInt(match[1] || match[6] || 0, 10);
@@ -123,15 +153,19 @@ function normalizePost(post) {
 
     if (!title || !id) return null;
 
+    // Tự động nhận diện danh mục từ URL nếu cào về thiếu danh mục
+    const detected = detectCategoryFromUrl(post.url);
+
     const category = String(
         post.category ||
         post.categoryName ||
+        detected?.category ||
         post.categoryId ||
         "Thời sự"
     ).trim();
 
     const categoryId = normalizeCategoryId(
-        post.categoryId || category
+        post.categoryId || detected?.categoryId || category
     );
 
     const subCategory = String(
@@ -165,153 +199,6 @@ function normalizePost(post) {
         source: String(post.source || "dantri.com.vn")
     };
 }
-
-function normalizeMenuItem(item) {
-    if (!item || typeof item !== "object") return null;
-
-    const title = String(
-        item.title || item.name || item.id || ""
-    ).trim();
-
-    const id = normalizeCategoryId(item.id || title);
-
-    if (!title || !id) return null;
-
-    return {
-        ...item,
-        id,
-        title,
-        type: item.type || (id === "home" ? "home" : "category"),
-        children: Array.isArray(item.children)
-            ? item.children
-                .map(child => {
-                    if (!child || typeof child !== "object") return null;
-
-                    const childTitle = String(
-                        child.title || child.name || child.id || ""
-                    ).trim();
-
-                    const childId = normalizeCategoryId(
-                        child.id || childTitle
-                    );
-
-                    if (!childTitle || !childId) return null;
-
-                    return {
-                        ...child,
-                        id: childId,
-                        title: childTitle,
-                        type: child.type || "category"
-                    };
-                })
-                .filter(Boolean)
-            : []
-    };
-}
-
-function isPostInCategory(post, catId) {
-    if (!post || !catId) return false;
-
-    const targetId = normalizeCategoryId(catId);
-
-    if (!targetId || targetId === "home" || targetId === "trang-chu" || targetId === "moi-nhat") {
-        return true;
-    }
-
-    const normalizedPost = normalizePost(post);
-    if (!normalizedPost) return false;
-
-    const postCatId = normalizedPost.categoryId;
-    const postSubCatId = normalizedPost.subCategoryId;
-
-    // Khớp danh mục chính hoặc danh mục con
-    if (postCatId === targetId || postSubCatId === targetId) {
-        return true;
-    }
-
-    if (
-        normalizeCategoryId(normalizedPost.category) === targetId ||
-        normalizeCategoryId(normalizedPost.subCategory) === targetId
-    ) {
-        return true;
-    }
-
-    const categories = getCategories();
-
-    function findCategory(items, id) {
-        for (const item of items || []) {
-            if (normalizeCategoryId(item.id) === id) return item;
-            const found = findCategory(item.children, id);
-            if (found) return found;
-        }
-        return null;
-    }
-
-    function getAllChildIds(category) {
-        let ids = [];
-        for (const child of category.children || []) {
-            ids.push(normalizeCategoryId(child.id));
-            ids = ids.concat(getAllChildIds(child));
-        }
-        return ids;
-    }
-
-    const targetCategory = findCategory(categories, targetId);
-    if (!targetCategory) return false;
-
-    // Chọn danh mục cha -> Hiển thị tất cả bài của các danh mục con
-    const childIds = getAllChildIds(targetCategory);
-    if (childIds.length > 0 && (childIds.includes(postCatId) || childIds.includes(postSubCatId))) {
-        return true;
-    }
-
-    return false;
-}
-
-function formatDate(value) {
-    if (!value) return "";
-
-    const time = parseDateToTime(value);
-    if (time === 0) return String(value);
-
-    const date = new Date(time);
-    return date.toLocaleString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-    });
-}
-
-function getPostImage(post) {
-    return (
-        post?.thumbnail ||
-        post?.image ||
-        "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&auto=format&fit=crop"
-    );
-}
-
-function getExcerpt(post) {
-    return String(post?.excerpt || "")
-        .trim()
-        .replace(/^(\(Dân trí\)|Dân trí)\s*[-–—]\s*/i, "")
-        .trim();
-}
-
-function sortPostsByDate(posts) {
-    return [...posts].sort((a, b) => {
-        const timeA = parseDateToTime(a.publishedAt);
-        const timeB = parseDateToTime(b.publishedAt);
-
-        if (timeA === timeB) {
-            return String(b.id || "").localeCompare(String(a.id || ""));
-        }
-
-        return timeB - timeA; // Sắp xếp giảm dần theo thời gian (mới nhất đứng đầu)
-    });
-}
-
 
 /* =========================================
    3. QUẢN LÝ LOCALSTORAGE
